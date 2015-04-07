@@ -1,4 +1,5 @@
 *.py[cod]
+notebooks/.ipynb_checkpoints/
 
 # C extensions
 *.so
