@@ -35,6 +35,10 @@ setup(
     package_dir={'androcmd': 'androcmd'},
     include_package_data=True,
     install_requires=[
+        'numpy',
+        'astropy',
+        'matplotlib',
+        'astroml',
     ],
     license='MIT',
     zip_safe=False,
