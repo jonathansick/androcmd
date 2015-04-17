@@ -31,8 +31,8 @@ from m31hst.phatast import PhatAstTable
 
 STARFISH = os.getenv("STARFISH")
 Lim = namedtuple('Lim', 'x y')
-PHAT_BANDS = ['F225W', 'F336W', 'F475W', 'F814W', 'F110W', 'F160W']
-WFC3_BANDS = ['F225W1', 'F336W', 'F110W', 'F160W']
+PHAT_BANDS = ['F275W', 'F336W', 'F475W', 'F814W', 'F110W', 'F160W']
+WFC3_BANDS = ['F275W1', 'F336W', 'F110W', 'F160W']
 ACS_BANDS = ['F475W', 'F814W']
 
 
@@ -85,7 +85,7 @@ class Pipeline(object):
                                                right_bands=ACS_BANDS)
                 for isoc in isoc_set:
                     isoc = Isochrone(isoc)
-                    isoc.rename_column('F225W1', 'F225W')
+                    isoc.rename_column('F275W1', 'F275W')
                     if phases is not None:
                         sels = []
                         for p in phases:
