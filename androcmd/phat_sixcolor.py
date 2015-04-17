@@ -7,6 +7,7 @@ Pipeline for analysis of hte PHAT six-color photometry.
 import os
 from glob import glob
 from collections import namedtuple, OrderedDict
+from functools import partial
 
 import numpy as np
 from astropy.table import Table
@@ -18,6 +19,13 @@ import astropy.units as u
 from padova import AgeGridRequest
 from padova.isocdata import join_isochrone_sets, Isochrone
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+# from matplotlib.figure import Figure
+# from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import matplotlib.gridspec as gridspec
+import palettable
+
 from starfisher import ColorPlane
 from starfisher import SimHess
 from starfisher import LibraryBuilder
@@ -27,6 +35,9 @@ from starfisher import ExtinctionDistribution
 from starfisher import ExtantCrowdingTable
 from starfisher import SFH
 from m31hst.phatast import PhatAstTable
+
+from starfisher.plots import plot_hess
+from androcmd.plot import contour_hess
 
 
 STARFISH = os.getenv("STARFISH")
@@ -171,6 +182,51 @@ class Pipeline(object):
         if not os.path.exists(sfh.full_outfile_path):
             sfh.run_sfh()
         self.fits[key] = sfh
+
+    def plot_isoc_phase_sim_hess(self, fig):
+        opt_sim = self.planes.get_sim_hess('f475w', 'f814w',
+                                           self.synth, self.lockfile)
+        ir_sim = self.planes.get_sim_hess('f110w', 'f160w',
+                                          self.synth, self.lockfile)
+        opt_cmd = self.planes.get('f475w', 'f814w')
+        ir_cmd = self.planes.get('f110w', 'f160w')
+
+        gs = gridspec.GridSpec(2, 3, wspace=0.4, bottom=0.2,
+                               width_ratios=[1., 1., 0.1])
+        ax_opt = fig.add_subplot(gs[0, 0])
+        ax_ir = fig.add_subplot(gs[0, 1])
+        ax_obs_opt = fig.add_subplot(gs[1, 0])
+        ax_obs_ir = fig.add_subplot(gs[1, 1])
+        cb_ax = fig.add_subplot(gs[1, 2])
+
+        plot_hess(ax_opt, opt_sim.hess, opt_cmd, opt_sim.origin,
+                  imshow_args=None)
+        plot_hess(ax_ir, ir_sim.hess, ir_cmd, ir_sim.origin,
+                  imshow_args=None)
+
+        c = self.catalog.data['f475w_vega'] - self.catalog.data['f814w_vega']
+        contour_hess(ax_obs_opt, c, self.catalog.data['f814w_vega'],
+                     opt_cmd.x_span, opt_cmd.y_span,
+                     plot_args={'ms': 3})
+        plot_isochrone_phases(ax_obs_opt, 'F475W', 'F814W', show_cb=False)
+        # opt_cmd.plot_mask(ax_obs_opt)
+        ax_obs_opt.set_xlabel(opt_cmd.x_label)
+        ax_obs_opt.set_ylabel(opt_cmd.y_label)
+        ax_obs_opt.set_xlim(opt_cmd.xlim)
+        ax_obs_opt.set_ylim(opt_cmd.ylim)
+
+        c = self.catalog.data['f110w_vega'] - self.catalog.data['f160w_vega']
+        contour_hess(ax_obs_ir, c, self.catalog.data['f160w_vega'],
+                     ir_cmd.x_span, ir_cmd.y_span,
+                     plot_args={'ms': 3})
+        plot_isochrone_phases(ax_obs_ir, 'F110W', 'F160W', show_cb=True,
+                              cb_ax=cb_ax)
+        # ir_cmd.plot_mask(ax_obs_ir)
+        ax_obs_ir.set_xlabel(ir_cmd.x_label)
+        ax_obs_ir.set_ylabel(ir_cmd.y_label)
+        ax_obs_ir.set_xlim(ir_cmd.xlim)
+        ax_obs_ir.set_ylim(ir_cmd.ylim)
+        fig.show()
 
 
 class Catalog(object):
@@ -330,3 +386,49 @@ def make_f814w_f160w(dpix=0.05, mag_lim=30.):
                        y_label=r'$\mathrm{F160W}$',
                        dpix=dpix)
     return plane
+
+
+def build_phat_filter_set(**kwargs):
+    r_wfc3 = AgeGridRequest(photsys='wfc3_wide', **kwargs)
+    r_acs = AgeGridRequest(photsys='acs_wfc', **kwargs)
+    isoc_set = join_isochrone_sets(r_wfc3.isochrone_set,
+                                   r_acs.isochrone_set,
+                                   left_bands=['F275W1', 'F336W',
+                                               'F110W', 'F160W'],
+                                   right_bands=['F475W', 'F814W'])
+    return isoc_set
+
+
+get_demo_age_grid = partial(build_phat_filter_set,
+                            z=0.019, min_log_age=6.6, max_log_age=10.13,
+                            delta_log_age=0.1)
+
+
+def plot_isochrone_phases(ax, band1, band2, show_cb=False, cb_ax=None):
+    isoc_set = get_demo_age_grid(**dict(isoc_kind='parsec_CAF09_v1.2S',
+                                        photsys_version='yang'))
+    phase_labels = {0: 'Pre-MS', 1: 'MS', 2: 'SGB', 3: 'RGB',
+                    4: 'CHeB(1)', 5: 'CHeB(2)', 6: 'CHeB(3)',
+                    7: 'E-AGB', 8: 'TP-AGB'}
+    cmap = mpl.colors.ListedColormap(
+        palettable.colorbrewer.qualitative.Set1_9.mpl_colors)
+    scalar_map = mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(vmin=-0.5,
+                                                                 vmax=8.5),
+                                       cmap=cmap)
+    scalar_map.set_array(np.array(range(0, 9)))
+
+    d = Distance(785 * u.kpc)
+    for isoc in isoc_set:
+        phases = np.unique(isoc['stage'])
+        srt = np.argsort(phases)
+        phases = phases[srt]
+        for p in phases:
+            s = np.where(isoc['stage'] == p)[0]
+            ax.plot(isoc[band1][s] - isoc[band2][s],
+                    isoc[band2][s] + d.distmod.value,
+                    c=scalar_map.to_rgba(p))
+    if show_cb:
+        cb = plt.colorbar(mappable=scalar_map,
+                          cax=cb_ax, ax=ax, ticks=range(0, 9))
+        cb.ax.set_yticklabels([phase_labels[p] for p in range(0, 9)])
+        cb.set_label(r"Stage")
