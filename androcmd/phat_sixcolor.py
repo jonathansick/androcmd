@@ -16,7 +16,7 @@ from astropy.coordinates import Distance
 import astropy.units as u
 
 from padova import AgeGridRequest
-from padova.isocdata import join_isochrone_sets
+from padova.isocdata import join_isochrone_sets, Isochrone
 
 from starfisher import ColorPlane
 from starfisher import SimHess
@@ -38,7 +38,7 @@ ACS_BANDS = ['F475W', 'F814W']
 
 class Pipeline(object):
     """Pipeline for Multi-CMD fitting and comparison"""
-    def __init__(self, brick, root_dir, isoc_args=None):
+    def __init__(self, brick, root_dir, isoc_args=None, phases=None):
         super(Pipeline, self).__init__()
         self.brick = brick
         self.catalog = Catalog(brick)
@@ -49,7 +49,7 @@ class Pipeline(object):
 
         self.z_grid = [0.015, 0.019, 0.024]
 
-        self.get_isochrones()
+        self.get_isochrones(isoc_args=isoc_args, phases=phases)
         self.build_lockfile()
         self.planes = PhatPlanes()
         self.run_synth()
@@ -64,7 +64,7 @@ class Pipeline(object):
             self._solution_tables[key] = tbl
         return tbl
 
-    def get_isochrones(self, isoc_args=None):
+    def get_isochrones(self, isoc_args=None, phases=None):
         if isoc_args is None:
             isoc_args = {}
         if not os.path.exists(os.path.join(STARFISH, self.isoc_dir)):
@@ -73,18 +73,25 @@ class Pipeline(object):
                                         min_log_age=6.6,
                                         max_log_age=10.13,
                                         delta_log_age=0.02,
-                                        phot='wfc3_wide', **isoc_args)
+                                        photsys='wfc3_wide', **isoc_args)
                 r_acs = AgeGridRequest(z,
                                        min_log_age=6.6,
                                        max_log_age=10.13,
                                        delta_log_age=0.02,
-                                       phot='acs_wfc', **isoc_args)
+                                       photsys='acs_wfc', **isoc_args)
                 isoc_set = join_isochrone_sets(r_wfc3.isochrone_set,
                                                r_acs.isochrone_set,
                                                left_bands=WFC3_BANDS,
                                                right_bands=ACS_BANDS)
                 for isoc in isoc_set:
+                    isoc = Isochrone(isoc)
                     isoc.rename_column('F225W1', 'F225W')
+                    if phases is not None:
+                        sels = []
+                        for p in phases:
+                            sels.append(np.where(isoc['stage'] == p)[0])
+                        s = np.concatenate(sels)
+                        isoc = isoc[s]
                     isoc.export_for_starfish(os.path.join(STARFISH,
                                                           self.isoc_dir),
                                              bands=PHAT_BANDS)
