@@ -16,6 +16,7 @@ from astropy.coordinates import Distance
 import astropy.units as u
 
 from padova import AgeGridRequest
+from padova.isocdata import join_isochrone_sets
 
 from starfisher import ColorPlane
 from starfisher import SimHess
@@ -24,18 +25,24 @@ from starfisher import Lockfile
 from starfisher import Synth
 from starfisher import ExtinctionDistribution
 from starfisher import ExtantCrowdingTable
+from starfisher import SFH
 from m31hst.phatast import PhatAstTable
 
 
 STARFISH = os.getenv("STARFISH")
 Lim = namedtuple('Lim', 'x y')
-wfc3_bands = ['F475W', 'F814W', 'F110W', 'F160W']
+PHAT_BANDS = ['F225W', 'F336W', 'F475W', 'F814W', 'F110W', 'F160W']
+WFC3_BANDS = ['F225W1', 'F336W', 'F110W', 'F160W']
+ACS_BANDS = ['F475W', 'F814W']
 
 
 class Pipeline(object):
     """Pipeline for Multi-CMD fitting and comparison"""
-    def __init__(self, brick, root_dir):
+    def __init__(self, brick, root_dir, isoc_args=None):
         super(Pipeline, self).__init__()
+        self.brick = brick
+        self.catalog = Catalog(brick)
+        self.root_dir = root_dir
         self.isoc_dir = os.path.join(root_dir, 'isoc')
         self.lib_dir = os.path.join(root_dir, 'lib')
         self.synth_dir = os.path.join(root_dir, 'synth')
@@ -47,22 +54,44 @@ class Pipeline(object):
         self.planes = PhatPlanes()
         self.run_synth()
 
-    def get_isochrones(self):
+        self.fits = OrderedDict()
+
+        self._solution_tables = {}
+
+    def get_solution_table(self, key):
+        if key not in self._solution_tables:
+            tbl = self.fits[key].solution_table()
+            self._solution_tables[key] = tbl
+        return tbl
+
+    def get_isochrones(self, isoc_args=None):
+        if isoc_args is None:
+            isoc_args = {}
         if not os.path.exists(os.path.join(STARFISH, self.isoc_dir)):
             for z in self.z_grid:
-                r = AgeGridRequest(z,
-                                   min_log_age=6.6,
-                                   max_log_age=10.13,
-                                   delta_log_age=0.02,
-                                   phot='wfc3', photsys_version='odfnew')
-                for isoc in r.isochrone_set:
+                r_wfc3 = AgeGridRequest(z,
+                                        min_log_age=6.6,
+                                        max_log_age=10.13,
+                                        delta_log_age=0.02,
+                                        phot='wfc3_wide', **isoc_args)
+                r_acs = AgeGridRequest(z,
+                                       min_log_age=6.6,
+                                       max_log_age=10.13,
+                                       delta_log_age=0.02,
+                                       phot='acs_wfc', **isoc_args)
+                isoc_set = join_isochrone_sets(r_wfc3.isochrone_set,
+                                               r_acs.isochrone_set,
+                                               left_bands=WFC3_BANDS,
+                                               right_bands=ACS_BANDS)
+                for isoc in isoc_set:
+                    isoc.rename_column('F225W1', 'F225W')
                     isoc.export_for_starfish(os.path.join(STARFISH,
                                                           self.isoc_dir),
-                                             bands=wfc3_bands)
+                                             bands=PHAT_BANDS)
 
         d = Distance(785 * u.kpc)
         self.builder = LibraryBuilder(self.isoc_dir, self.lib_dir,
-                                      nmag=len(wfc3_bands),
+                                      nmag=len(PHAT_BANDS),
                                       dmod=d.distmod.value,
                                       iverb=3)
         if not os.path.exists(self.builder.full_isofile_path):
@@ -105,13 +134,13 @@ class Pipeline(object):
         full_crowd_path = os.path.join(STARFISH, crowd_path)
         tbl = PhatAstTable()
         tbl.write_crowdfile_for_field(full_crowd_path, 0,
-                                      bands=wfc3_bands)
+                                      bands=PHAT_BANDS)
         crowd = ExtantCrowdingTable(crowd_path)
 
         # No extinction, yet
         young_av = ExtinctionDistribution()
         old_av = ExtinctionDistribution()
-        rel_extinction = np.ones(len(wfc3_bands), dtype=float)
+        rel_extinction = np.ones(len(PHAT_BANDS), dtype=float)
         for av in (young_av, old_av):
             av.set_uniform(0.)
 
@@ -124,6 +153,17 @@ class Pipeline(object):
                            nstars=10000000)
         if len(glob(os.path.join(STARFISH, self.synth_dir, "z*"))) == 0:
             self.synth.run_synth(n_cpu=4)
+
+    def fit_planes(self, key, color_planes, phot_colors):
+        fit_dir = os.path.join(self.root_dir, key)
+        data_root = os.path.join(fit_dir, "phot.")
+        for band1, band2 in phot_colors:
+            print data_root, band1, band2
+            self.catalog.write(band1, band2, data_root)
+        sfh = SFH(data_root, self.synth, fit_dir, planes=color_planes)
+        if not os.path.exists(sfh.full_outfile_path):
+            sfh.run_sfh()
+        self.fits[key] = sfh
 
 
 class Catalog(object):
@@ -148,10 +188,11 @@ class Catalog(object):
         photdata['y'][:] = self.data[keys[1]]
 
         path = self.written_path(band1, band2, data_root)
-        fit_dir = os.path.dirname(path)
+        full_path = os.path.join(STARFISH, path)
+        fit_dir = os.path.dirname(full_path)
         if not os.path.exists(fit_dir):
             os.makedirs(fit_dir)
-        np.savetxt(path, photdata, delimiter=' ', fmt='%.4f')
+        np.savetxt(full_path, photdata, delimiter=' ', fmt='%.4f')
 
 
 class PhatPlanes(object):
@@ -169,7 +210,7 @@ class PhatPlanes(object):
 
         self._sim_hess_planes = {}
 
-    def get_plane(self, band1, band2):
+    def get(self, band1, band2):
         return self._planes[(band1, band2)]
 
     def get_sim_hess(self, band1, band2, synth, lockfile):
@@ -187,9 +228,9 @@ class PhatPlanes(object):
 
 def make_f475w_f814w(dpix=0.05, mag_lim=30.):
     lim = Lim(x=(-1, 5), y=(25.5, 20))
-    plane = ColorPlane((wfc3_bands.index('F475W'),
-                        wfc3_bands.index('F814W')),
-                       wfc3_bands.index('F814W'),
+    plane = ColorPlane((PHAT_BANDS.index('F475W'),
+                        PHAT_BANDS.index('F814W')),
+                       PHAT_BANDS.index('F814W'),
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
@@ -205,9 +246,9 @@ def make_f475w_f814w(dpix=0.05, mag_lim=30.):
 
 def make_f110w_f160w(dpix=0.05, mag_lim=30.):
     lim = Lim(x=(0.3, 1.3), y=(24, 16.5))
-    plane = ColorPlane((wfc3_bands.index('F110W'),
-                        wfc3_bands.index('F160W')),
-                       wfc3_bands.index('F160W'),
+    plane = ColorPlane((PHAT_BANDS.index('F110W'),
+                        PHAT_BANDS.index('F160W')),
+                       PHAT_BANDS.index('F160W'),
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
@@ -226,9 +267,9 @@ def make_f110w_f160w(dpix=0.05, mag_lim=30.):
 
 def make_f475w_f160w(dpix=0.05, mag_lim=30.):
     lim = Lim(x=(-0.8, 8), y=(25, 17.5))
-    plane = ColorPlane((wfc3_bands.index('F475W'),
-                        wfc3_bands.index('F160W')),
-                       wfc3_bands.index('F160W'),
+    plane = ColorPlane((PHAT_BANDS.index('F475W'),
+                        PHAT_BANDS.index('F160W')),
+                       PHAT_BANDS.index('F160W'),
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
@@ -241,9 +282,9 @@ def make_f475w_f160w(dpix=0.05, mag_lim=30.):
 
 def make_f475w_f110w(dpix=0.05, mag_lim=30.):
     lim = Lim(x=(-0.8, 7), y=(25, 18))
-    plane = ColorPlane((wfc3_bands.index('F475W'),
-                        wfc3_bands.index('F110W')),
-                       wfc3_bands.index('F110W'),
+    plane = ColorPlane((PHAT_BANDS.index('F475W'),
+                        PHAT_BANDS.index('F110W')),
+                       PHAT_BANDS.index('F110W'),
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
@@ -256,9 +297,9 @@ def make_f475w_f110w(dpix=0.05, mag_lim=30.):
 
 def make_f814w_f110w(dpix=0.05, mag_lim=30.):
     lim = Lim(x=(-0.1, 1.8), y=(25, 19))
-    plane = ColorPlane((wfc3_bands.index('F814W'),
-                        wfc3_bands.index('F110W')),
-                       wfc3_bands.index('F110W'),
+    plane = ColorPlane((PHAT_BANDS.index('F814W'),
+                        PHAT_BANDS.index('F110W')),
+                       PHAT_BANDS.index('F110W'),
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
@@ -271,9 +312,9 @@ def make_f814w_f110w(dpix=0.05, mag_lim=30.):
 
 def make_f814w_f160w(dpix=0.05, mag_lim=30.):
     lim = Lim(x=(-0.5, 3), y=(24, 17.5))
-    plane = ColorPlane((wfc3_bands.index('F814W'),
-                        wfc3_bands.index('F160W')),
-                       wfc3_bands.index('F160W'),
+    plane = ColorPlane((PHAT_BANDS.index('F814W'),
+                        PHAT_BANDS.index('F160W')),
+                       PHAT_BANDS.index('F160W'),
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
