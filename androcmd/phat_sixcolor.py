@@ -143,7 +143,7 @@ class Pipeline(object):
             name = "z{0}_{1:05.2f}".format(z_str, mean_age)
             self.lockfile.lock_box(name, (logage0, logage1), (0.014, 0.025))
 
-    def run_synth(self):
+    def run_synth(self, planes=None, force=False):
         full_synth_dir = os.path.join(STARFISH, self.synth_dir)
         if not os.path.exists(full_synth_dir):
             os.makedirs(full_synth_dir)
@@ -163,15 +163,20 @@ class Pipeline(object):
         for av in (young_av, old_av):
             av.set_uniform(0.)
 
+        if planes is None:
+            planes = self.planes.all_planes
+
         self.synth = Synth(self.synth_dir, self.builder, self.lockfile, crowd,
                            rel_extinction,
                            young_extinction=young_av,
                            old_extinction=old_av,
-                           planes=self.planes.all_planes,
+                           planes=planes,
                            mass_span=(0.08, 150.),
                            nstars=10000000)
-        if len(glob(os.path.join(STARFISH, self.synth_dir, "z*"))) == 0:
-            self.synth.run_synth(n_cpu=4)
+        existing_synth = len(glob(
+            os.path.join(STARFISH, self.synth_dir, "z*"))) == 0
+        if existing_synth or force:
+            self.synth.run_synth(n_cpu=4, clean=False)
 
     def fit_planes(self, key, color_planes, phot_colors):
         fit_dir = os.path.join(self.root_dir, key)
@@ -185,12 +190,12 @@ class Pipeline(object):
         self.fits[key] = sfh
 
     def show_isoc_phase_sim_hess(self, fig):
-        opt_sim = self.planes.get_sim_hess('f475w', 'f814w',
+        opt_sim = self.planes.get_sim_hess(('f475w', 'f814w'),
                                            self.synth, self.lockfile)
-        ir_sim = self.planes.get_sim_hess('f110w', 'f160w',
+        ir_sim = self.planes.get_sim_hess(('f110w', 'f160w'),
                                           self.synth, self.lockfile)
-        opt_cmd = self.planes.get('f475w', 'f814w')
-        ir_cmd = self.planes.get('f110w', 'f160w')
+        opt_cmd = self.planes[('f475w', 'f814w')]
+        ir_cmd = self.planes[('f110w', 'f160w')]
 
         gs = gridspec.GridSpec(2, 3, wspace=0.4, bottom=0.2,
                                width_ratios=[1., 1., 0.1])
@@ -277,6 +282,7 @@ class PhatPlanes(object):
         super(PhatPlanes, self).__init__()
         self._planes = OrderedDict([
             (('f475w', 'f814w'), make_f475w_f814w()),
+            ('f475w_f814w_rgb', make_f475w_f814w_rgb()),
             (('f475w', 'f110w'), make_f475w_f110w()),
             (('f475w', 'f160w'), make_f475w_f160w()),
             (('f814w', 'f110w'), make_f814w_f110w()),
@@ -286,11 +292,10 @@ class PhatPlanes(object):
 
         self._sim_hess_planes = {}
 
-    def get(self, band1, band2):
-        return self._planes[(band1, band2)]
+    def __getitem__(self, key):
+        return self._planes[key]
 
-    def get_sim_hess(self, band1, band2, synth, lockfile):
-        key = (band1, band2)
+    def get_sim_hess(self, key, synth, lockfile):
         if key not in self._sim_hess_planes:
             sh = SimHess(synth, self._planes[key],
                          np.ones(len(lockfile.active_groups)))
@@ -317,6 +322,24 @@ def make_f475w_f814w(dpix=0.05, mag_lim=30.):
     plane.mask_region((3, 5), (28, 25))
     plane.mask_region((3.5, 5), (25, 23))
     plane.mask_region((4, 5), (23, 22.5))
+    return plane
+
+
+def make_f475w_f814w_rgb(dpix=0.05, mag_lim=30.):
+    lim = Lim(x=(1.2, 5), y=(23.5, 20))
+    plane = ColorPlane((PHAT_BANDS.index('F475W'),
+                        PHAT_BANDS.index('F814W')),
+                       PHAT_BANDS.index('F814W'),
+                       lim.x,
+                       (min(lim.y), max(lim.y)),
+                       mag_lim,
+                       suffix='rgbf475f814',
+                       x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
+                       y_label=r'$\mathrm{F814W}$',
+                       dpix=dpix)
+    # plane.mask_region((3, 5), (28, 25))
+    # plane.mask_region((3.5, 5), (25, 23))
+    # plane.mask_region((4, 5), (23, 22.5))
     return plane
 
 
