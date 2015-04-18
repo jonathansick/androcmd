@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # encoding: utf-8
 """
-Pipeline for analysis of hte PHAT six-color photometry.
+Pipeline for analysis of the PHAT six-color photometry.
 """
 
 import os
@@ -42,7 +42,7 @@ from androcmd.plot import contour_hess
 
 STARFISH = os.getenv("STARFISH")
 Lim = namedtuple('Lim', 'x y')
-PHAT_BANDS = ['F275W', 'F336W', 'F475W', 'F814W', 'F110W', 'F160W']
+PHAT_BANDS = ['F475W', 'F814W', 'F275W', 'F336W', 'F110W', 'F160W']
 WFC3_BANDS = ['F275W1', 'F336W', 'F110W', 'F160W']
 ACS_BANDS = ['F475W', 'F814W']
 
