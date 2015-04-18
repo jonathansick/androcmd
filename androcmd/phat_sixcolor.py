@@ -181,9 +181,9 @@ class Pipeline(object):
     def fit_planes(self, key, color_planes, phot_colors):
         fit_dir = os.path.join(self.root_dir, key)
         data_root = os.path.join(fit_dir, "phot.")
-        for band1, band2 in phot_colors:
+        for plane, (band1, band2) in zip(color_planes, phot_colors):
             print data_root, band1, band2
-            self.catalog.write(band1, band2, data_root)
+            self.catalog.write(band1, band2, data_root, plane.suffix)
         sfh = SFH(data_root, self.synth, fit_dir, planes=color_planes)
         if not os.path.exists(sfh.full_outfile_path):
             sfh.run_sfh()
@@ -253,13 +253,7 @@ class Catalog(object):
         super(Catalog, self).__init__()
         self.data = Table.read(phat_v2_phot_path(brick), format='fits')
 
-    def written_path(self, band1, band2, data_root):
-        """Path to the output data file."""
-        ext = '{0}{1}'.format(band1.rstrip('w'), band2.rstrip('w'))
-        path = data_root + ext
-        return path
-
-    def write(self, band1, band2, data_root):
+    def write(self, band1, band2, data_root, suffix):
         """Write a band1-band2 vs band2 photometry catalog."""
         bands = (band1, band2)
         keys = ['{0}_vega'.format(band) for band in bands]
@@ -268,7 +262,7 @@ class Catalog(object):
         photdata['x'][:] = self.data[keys[0]] - self.data[keys[1]]
         photdata['y'][:] = self.data[keys[1]]
 
-        path = self.written_path(band1, band2, data_root)
+        path = data_root + suffix
         full_path = os.path.join(STARFISH, path)
         fit_dir = os.path.dirname(full_path)
         if not os.path.exists(fit_dir):
@@ -333,7 +327,7 @@ def make_f475w_f814w_rgb(dpix=0.05, mag_lim=30.):
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
-                       suffix='rgbf475f814',
+                       suffix='rgbopt',
                        x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
                        y_label=r'$\mathrm{F814W}$',
                        dpix=dpix)
