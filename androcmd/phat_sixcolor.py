@@ -21,8 +21,6 @@ from padova.isocdata import join_isochrone_sets, Isochrone
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-# from matplotlib.figure import Figure
-# from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.gridspec as gridspec
 import palettable
 
@@ -34,9 +32,12 @@ from starfisher import Synth
 from starfisher import ExtinctionDistribution
 from starfisher import ExtantCrowdingTable
 from starfisher import SFH
+from starfisher.plots import plot_lock_polygons
+from starfisher.plots import plot_isochrone_logage_logzsol
+from starfisher.plots import plot_hess
+
 from m31hst.phatast import PhatAstTable
 
-from starfisher.plots import plot_hess
 from androcmd.plot import contour_hess
 
 
@@ -183,7 +184,7 @@ class Pipeline(object):
             sfh.run_sfh()
         self.fits[key] = sfh
 
-    def plot_isoc_phase_sim_hess(self, fig):
+    def show_isoc_phase_sim_hess(self, fig):
         opt_sim = self.planes.get_sim_hess('f475w', 'f814w',
                                            self.synth, self.lockfile)
         ir_sim = self.planes.get_sim_hess('f110w', 'f160w',
@@ -226,6 +227,18 @@ class Pipeline(object):
         ax_obs_ir.set_ylabel(ir_cmd.y_label)
         ax_obs_ir.set_xlim(ir_cmd.xlim)
         ax_obs_ir.set_ylim(ir_cmd.ylim)
+        fig.show()
+
+    def show_lockfile(self, fig, logage_lim=(6.2, 10.2),
+                      logzzsol_lim=(-0.2, 0.2)):
+        # fig = plt.figure(figsize=(6, 6))
+        ax = fig.add_subplot(111)
+        plot_isochrone_logage_logzsol(ax, self.builder, c='k', s=8)
+        plot_lock_polygons(ax, self.lockfile, facecolor='None', edgecolor='r')
+        ax.set_xlim(*logage_lim)
+        ax.set_ylim(*logzzsol_lim)
+        ax.set_xlabel(r"$\log(A)$")
+        ax.set_ylabel(r"$\log(Z/Z_\odot)$")
         fig.show()
 
 
