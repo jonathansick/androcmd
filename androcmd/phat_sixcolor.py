@@ -23,6 +23,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import palettable
+import cubehelix
 
 from starfisher import ColorPlane
 from starfisher import SimHess
@@ -35,6 +36,7 @@ from starfisher import SFH
 from starfisher.plots import plot_lock_polygons
 from starfisher.plots import plot_isochrone_logage_logzsol
 from starfisher.plots import plot_hess
+from starfisher.sfhplot import ChiTriptykPlot
 
 from m31hst.phatast import PhatAstTable
 
@@ -178,14 +180,13 @@ class Pipeline(object):
         if existing_synth or force:
             self.synth.run_synth(n_cpu=4, clean=False)
 
-    def fit_planes(self, key, color_planes, phot_colors):
+    def fit_planes(self, key, color_planes, phot_colors, redo=False):
         fit_dir = os.path.join(self.root_dir, key)
         data_root = os.path.join(fit_dir, "phot.")
         for plane, (band1, band2) in zip(color_planes, phot_colors):
-            print data_root, band1, band2
             self.catalog.write(band1, band2, data_root, plane.suffix)
         sfh = SFH(data_root, self.synth, fit_dir, planes=color_planes)
-        if not os.path.exists(sfh.full_outfile_path):
+        if (not os.path.exists(sfh.full_outfile_path)) or redo:
             sfh.run_sfh()
         self.fits[key] = sfh
 
@@ -233,6 +234,80 @@ class Pipeline(object):
         ax_obs_ir.set_xlim(ir_cmd.xlim)
         ax_obs_ir.set_ylim(ir_cmd.ylim)
         fig.show()
+
+    def plot_contour_hess(self, ax, bands, plane_key):
+        plane = self.planes[plane_key]
+        c = self.catalog.data[bands[0]] - self.catalog.data[bands[-1]]
+        contour_hess(ax, c, self.catalog.data[bands[-1]],
+                     plane.x_span, plane.y_span,
+                     plot_args={'ms': 3})
+        ax.set_xlabel(plane.x_label)
+        ax.set_ylabel(plane.y_label)
+        ax.set_xlim(*plane.xlim)
+        ax.set_ylim(*plane.ylim)
+
+    def plot_sim_hess(self, ax, plane_key):
+        plane = self.planes[plane_key]
+        sim = self.planes.get_sim_hess(plane_key, self.synth, self.lockfile)
+        plot_hess(ax, sim.hess, plane, sim.origin,
+                  imshow_args=None)
+
+    def plot_obs_hess(self, arg1):
+        pass
+
+    def plot_fit_hess(self, arg1):
+        pass
+
+    def plot_predicted_hess(self, arg1):
+        pass
+
+    def plot_triptyk(self, fig, ax_obs, ax_model, ax_chi, fit_key, plane_key,
+                     xtick=1., xfmt="%.0f"):
+        cmapper = lambda: cubehelix.cmap(startHue=240, endHue=-300, minSat=1,
+                                         maxSat=2.5, minLight=.3,
+                                         maxLight=.8, gamma=.9)
+        fit = self.fits[fit_key]
+        plane = self.planes[plane_key]
+        ctp = ChiTriptykPlot(fit, plane)
+        ctp.setup_axes(fig, ax_obs=ax_obs, ax_mod=ax_model, ax_chi=ax_chi,
+                       major_x=xtick, major_x_fmt=xfmt)
+        ctp.plot_obs_in_ax(ax_obs, cmap=cmapper())
+        ctp.plot_mod_in_ax(ax_model, cmap=cmapper())
+        ctp.plot_chi_in_ax(ax_chi, cmap=cubehelix.cmap())
+        ax_obs.text(0.0, 1.01, "Observed",
+                    transform=ax_obs.transAxes, size=8, ha='left')
+        ax_model.text(0.0, 1.01, "Model",
+                      transform=ax_model.transAxes, size=8, ha='left')
+        ax_chi.text(0.0, 1.01, r"$\log \chi^2$",
+                    transform=ax_chi.transAxes, size=8, ha='left')
+
+    def plot_isoc_grid_ages(self, ax, band1, band2,
+                            show_cb=False, cb_ax=None):
+        isoc_set = get_demo_age_grid(**dict(isoc_kind='parsec_CAF09_v1.2S',
+                                            photsys_version='yang'))
+        cmap = cubehelix.cmap(startHue=240, endHue=-300,
+                              minSat=1, maxSat=2.5, minLight=.3,
+                              maxLight=.8, gamma=.9)
+        norm = mpl.colors.Normalize(vmin=7., vmax=10.1)
+        scalar_map = mpl.cm.ScalarMappable(norm=norm, cmap=cmap)
+        scalar_map.set_array(np.array([isoc.age for isoc in isoc_set]))
+
+        d = Distance(785 * u.kpc)
+        for isoc in isoc_set:
+            ax.plot(isoc[band1] - isoc[band2],
+                    isoc[band2] + d.distmod.value,
+                    c=scalar_map.to_rgba(np.log10(isoc.age)),
+                    lw=0.8)
+        if show_cb:
+            cb = plt.colorbar(mappable=scalar_map,
+                              cax=cb_ax, ax=ax,
+                              ticks=np.arange(6., 10.2))
+            cb.set_label(r"log(age)")
+
+    def plot_isoc_grid_phases(self, ax, band1, band2,
+                              show_cb=False, cb_ax=None):
+        plot_isochrone_phases(ax, band1, band2,
+                              show_cb=show_cb, cb_ax=cb_ax)
 
     def show_lockfile(self, fig, logage_lim=(6.2, 10.2),
                       logzzsol_lim=(-0.2, 0.2)):
@@ -431,7 +506,7 @@ def build_phat_filter_set(**kwargs):
 
 get_demo_age_grid = partial(build_phat_filter_set,
                             z=0.019, min_log_age=6.6, max_log_age=10.13,
-                            delta_log_age=0.1)
+                            delta_log_age=0.2)
 
 
 def plot_isochrone_phases(ax, band1, band2, show_cb=False, cb_ax=None):
@@ -456,7 +531,8 @@ def plot_isochrone_phases(ax, band1, band2, show_cb=False, cb_ax=None):
             s = np.where(isoc['stage'] == p)[0]
             ax.plot(isoc[band1][s] - isoc[band2][s],
                     isoc[band2][s] + d.distmod.value,
-                    c=scalar_map.to_rgba(p))
+                    c=scalar_map.to_rgba(p),
+                    lw=0.8)
     if show_cb:
         cb = plt.colorbar(mappable=scalar_map,
                           cax=cb_ax, ax=ax, ticks=range(0, 9))
