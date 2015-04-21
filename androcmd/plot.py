@@ -5,11 +5,7 @@ Plotting utilities for androcmd
 """
 
 import matplotlib as mpl
-# from matplotlib.figure import Figure
-# from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-# import matplotlib.gridspec as gridspec
 from astroML.plotting import scatter_contour
-# import cubehelix
 
 
 def contour_hess(ax, c, m, xlim, ylim,

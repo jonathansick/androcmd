@@ -377,7 +377,7 @@ class PhatPlanes(object):
 
 
 def make_f475w_f814w(dpix=0.05, mag_lim=30.):
-    lim = Lim(x=(-1, 5), y=(25.5, 20))
+    lim = Lim(x=(-1, 5.), y=(25.5, 20.))
     plane = ColorPlane((PHAT_BANDS.index('F475W'),
                         PHAT_BANDS.index('F814W')),
                        PHAT_BANDS.index('F814W'),
@@ -395,7 +395,7 @@ def make_f475w_f814w(dpix=0.05, mag_lim=30.):
 
 
 def make_f475w_f814w_rgb(dpix=0.05, mag_lim=30.):
-    lim = Lim(x=(1.2, 5), y=(23.5, 20))
+    lim = Lim(x=(1.2, 5.), y=(23.5, 20.))
     plane = ColorPlane((PHAT_BANDS.index('F475W'),
                         PHAT_BANDS.index('F814W')),
                        PHAT_BANDS.index('F814W'),
@@ -405,7 +405,8 @@ def make_f475w_f814w_rgb(dpix=0.05, mag_lim=30.):
                        suffix='rgbopt',
                        x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
                        y_label=r'$\mathrm{F814W}$',
-                       dpix=dpix)
+                       dpix=dpix,
+                       nx=75)  # NOTE auto-calc failed to compute 75
     # plane.mask_region((3, 5), (28, 25))
     # plane.mask_region((3.5, 5), (25, 23))
     # plane.mask_region((4, 5), (23, 22.5))
@@ -413,7 +414,7 @@ def make_f475w_f814w_rgb(dpix=0.05, mag_lim=30.):
 
 
 def make_f110w_f160w(dpix=0.05, mag_lim=30.):
-    lim = Lim(x=(0.3, 1.3), y=(24, 16.5))
+    lim = Lim(x=(0.3, 1.3), y=(24., 16.5))
     plane = ColorPlane((PHAT_BANDS.index('F110W'),
                         PHAT_BANDS.index('F160W')),
                        PHAT_BANDS.index('F160W'),
@@ -434,7 +435,7 @@ def make_f110w_f160w(dpix=0.05, mag_lim=30.):
 
 
 def make_f475w_f160w(dpix=0.05, mag_lim=30.):
-    lim = Lim(x=(-0.8, 8), y=(25, 17.5))
+    lim = Lim(x=(-0.8, 8.), y=(25., 17.5))
     plane = ColorPlane((PHAT_BANDS.index('F475W'),
                         PHAT_BANDS.index('F160W')),
                        PHAT_BANDS.index('F160W'),
@@ -449,7 +450,7 @@ def make_f475w_f160w(dpix=0.05, mag_lim=30.):
 
 
 def make_f475w_f110w(dpix=0.05, mag_lim=30.):
-    lim = Lim(x=(-0.8, 7), y=(25, 18))
+    lim = Lim(x=(-0.8, 7.), y=(25., 18.))
     plane = ColorPlane((PHAT_BANDS.index('F475W'),
                         PHAT_BANDS.index('F110W')),
                        PHAT_BANDS.index('F110W'),
