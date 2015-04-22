@@ -99,8 +99,8 @@ class PhatCatalog(DatasetBase):
     Photometry is lazy loaded to it is efficient to rebuild the pipeline
     object.
     """
-    def __init__(self, **kwargs):
-        self.brick = kwargs.pop('brick')
+    def __init__(self, brick, **kwargs):
+        self.brick = brick
         self._phat_data = None
         super(PhatCatalog, self).__init__(**kwargs)
 
@@ -113,7 +113,7 @@ class PhatCatalog(DatasetBase):
             old_name = "_".join((band.lower(), 'vega'))
             self._phat_data.rename_column(old_name, band)
 
-    def _make_phot_column(self, band):
+    def get_phot(self, band):
         if not isinstance(band, basestring):
             band1, band2 = band
             return self._phat_data[band1] - self._phat_data[band2]
@@ -124,8 +124,8 @@ class PhatCatalog(DatasetBase):
         if self._phat_data is None:
             self._load_phat_data()  # lazy loading
 
-        x = self._make_phot_column(x_band)
-        y = self._make_phot_column(y_band)
+        x = self.get_phot(x_band)
+        y = self.get_phot(y_band)
         phot_dtype = np.dtype([('x', np.float), ('y', np.float)])
         photdata = np.empty(len(self._phat_data), dtype=phot_dtype)
         photdata['x'][:] = x
@@ -195,7 +195,7 @@ class NoDust(ExtinctionBase):
         super(NoDust, self).build_extinction()
 
 
-class SolarZPhatPipeline(CompletePhatPlanes, SolarZIsocs, PhatCatalog,
+class SolarZPhatPipeline(CompletePhatPlanes, SolarZIsocs,
                          SolarLockfile, NoDust, PhatCrowding, PipelineBase):
     """A pipeline for fitting PHAT bricks with solar metallicity isochrones."""
     def __init__(self, **kwargs):
@@ -203,7 +203,7 @@ class SolarZPhatPipeline(CompletePhatPlanes, SolarZIsocs, PhatCatalog,
         super(SolarZPhatPipeline, self).__init__(**kwargs)
 
 
-class SolarRgbPipeline(RgbPhatPlanes, SolarZIsocs, PhatCatalog,
+class SolarRgbPipeline(RgbPhatPlanes, SolarZIsocs,
                        SolarLockfile, NoDust, PhatCrowding, PipelineBase):
     """A pipeline for fitting PHAT bricks with solar metallicity isochrones."""
     def __init__(self, **kwargs):
