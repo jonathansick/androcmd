@@ -5,6 +5,7 @@ Pipelines for fitting PHAT CMDs.
 """
 import os
 from collections import namedtuple, OrderedDict
+from glob import glob
 
 import numpy as np
 from astropy.coordinates import Distance
@@ -12,14 +13,17 @@ import astropy.units as u
 from astropy.table import Table
 
 from m31hst import phat_v2_phot_path
+from m31hst.phatast import PhatAstTable
 
 from padova import AgeGridRequest
 from padova.isocdata import join_isochrone_sets, Isochrone
 
 from starfisher import ColorPlane
 from starfisher import Lockfile
+from starfisher import ExtantCrowdingTable
 from starfisher.pipeline import (
-    PipelineBase, IsochroneSetBase, DatasetBase, PlaneBase, LockBase)
+    PipelineBase, IsochroneSetBase, DatasetBase, PlaneBase, LockBase,
+    CrowdingBase, ExtinctionBase)
 
 PHAT_BANDS = ('F475W', 'F814W', 'F275W', 'F336W', 'F110W', 'F160W')
 STARFISH = os.getenv("STARFISH")
@@ -45,12 +49,20 @@ class SolarZIsocs(IsochroneSetBase):
 
     def setup_isochrones(self):
         """Download Padova isochrones."""
+        print "Running SolarZIsocs setup_isochrones"
         WFC3_BANDS = ['F275W1', 'F336W', 'F110W', 'F160W']
         ACS_BANDS = ['F475W', 'F814W']
 
+        if not os.path.exists(os.path.join(STARFISH, self.isoc_dir)):
+            make_isocs = True
+        elif len(glob(os.path.join(STARFISH, self.isoc_dir, "*"))) == 0:
+            make_isocs = True
+        else:
+            make_isocs = False
+
         if self.isoc_args is None:
             self.isoc_args = {}
-        if not os.path.exists(os.path.join(STARFISH, self.isoc_dir)):
+        if make_isocs:
             for z in self.z_grid:
                 r_wfc3 = AgeGridRequest(z,
                                         min_log_age=6.6,
@@ -147,6 +159,20 @@ class CompletePhatPlanes(PlaneBase):
         return self._planes
 
 
+class RgbPhatPlanes(PlaneBase):
+    """Color planes for PHAT data."""
+    def __init__(self, **kwargs):
+        self._planes = OrderedDict([
+            ('f475w_f814w_rgb', make_f475w_f814w_rgb()),
+        ])
+        print "RgbPhatPlanes", kwargs
+        super(RgbPhatPlanes, self).__init__(**kwargs)
+
+    @property
+    def planes(self):
+        return self._planes
+
+
 class SolarLockfile(LockBase):
     """Lockfile mixin to create an iso-metallicity Hess set."""
     def __init__(self, **kwargs):
@@ -178,12 +204,45 @@ class SolarLockfile(LockBase):
             self.lockfile.lock_box(name, (logage0, logage1), (0.014, 0.025))
 
 
+class PhatCrowding(CrowdingBase):
+    """Use crowding from the PHAT AST fields."""
+    def __init__(self, **kwargs):
+        self._ast_field = kwargs.pop('ast_field', 0)
+        super(PhatCrowding, self).__init__(**kwargs)
+
+    def build_crowding(self):
+        # Use PHAT AST from the outer field (field 0)
+        crowd_path = os.path.join(self.synth_dir, "crowding.dat")
+        full_crowd_path = os.path.join(STARFISH, crowd_path)
+        tbl = PhatAstTable()
+        tbl.write_crowdfile_for_field(full_crowd_path, 0,
+                                      bands=self.bands)
+        self.crowd = ExtantCrowdingTable(crowd_path)
+
+
+class NoDust(ExtinctionBase):
+    """Mixin for no dust."""
+    def __init__(self, **kwargs):
+        super(NoDust, self).__init__(**kwargs)
+
+    def build_extinction(self):
+        super(NoDust, self).build_extinction()
+
+
 class SolarZPhatPipeline(CompletePhatPlanes, SolarZIsocs, PhatCatalog,
-                         SolarLockfile, PipelineBase):
+                         SolarLockfile, NoDust, PhatCrowding, PipelineBase):
     """A pipeline for fitting PHAT bricks with solar metallicity isochrones."""
     def __init__(self, **kwargs):
         print "SolarZPhatPipeline", kwargs
         super(SolarZPhatPipeline, self).__init__(**kwargs)
+
+
+class SolarRgbPipeline(RgbPhatPlanes, SolarZIsocs, PhatCatalog,
+                       SolarLockfile, NoDust, PhatCrowding, PipelineBase):
+    """A pipeline for fitting PHAT bricks with solar metallicity isochrones."""
+    def __init__(self, **kwargs):
+        print "SolarRgbPipeline", kwargs
+        super(SolarRgbPipeline, self).__init__(**kwargs)
 
 
 def make_f475w_f814w(dpix=0.05, mag_lim=30.):
