@@ -14,17 +14,34 @@ from starfisher.pipeline import PlaneBase
 Lim = namedtuple('Lim', 'x y')
 
 
+class BasicPhatPlanes(PlaneBase):
+    """Color planes for PHAT data."""
+    def __init__(self, **kwargs):
+        self._planes = OrderedDict([
+            ('f475w_f814w', make_f475w_f814w()),
+            ('f475w_f814w_rgb', make_f475w_f814w_rgb()),
+            ('f475w_f160w', make_f475w_f160w()),
+            ('f110w_f160w', make_f110w_f160w()),
+        ])
+        print "BasicPhatPlanes", kwargs
+        super(BasicPhatPlanes, self).__init__(**kwargs)
+
+    @property
+    def planes(self):
+        return self._planes
+
+
 class CompletePhatPlanes(PlaneBase):
     """Color planes for PHAT data."""
     def __init__(self, **kwargs):
         self._planes = OrderedDict([
-            (('f475w', 'f814w'), make_f475w_f814w()),
+            ('f475w_f814w', make_f475w_f814w()),
             ('f475w_f814w_rgb', make_f475w_f814w_rgb()),
-            (('f475w', 'f110w'), make_f475w_f110w()),
-            (('f475w', 'f160w'), make_f475w_f160w()),
-            (('f814w', 'f110w'), make_f814w_f110w()),
-            (('f814w', 'f160w'), make_f814w_f160w()),
-            (('f110w', 'f160w'), make_f110w_f160w()),
+            ('f475w_f110w', make_f475w_f110w()),
+            ('f475w_f160w', make_f475w_f160w()),
+            ('f814w_f110w', make_f814w_f110w()),
+            ('f814w_f160w', make_f814w_f160w()),
+            ('f110w_f160w', make_f110w_f160w()),
         ])
         print "CompletePhatPlanes", kwargs
         super(CompletePhatPlanes, self).__init__(**kwargs)
@@ -38,7 +55,6 @@ class RgbPhatPlanes(PlaneBase):
     """Color planes for PHAT data."""
     def __init__(self, **kwargs):
         self._planes = OrderedDict([
-            # ('f475w_f814w_rgb', make_f475w_f814w_rgb_hack()),
             ('f475w_f814w_rgb', make_f475w_f814w_rgb()),
         ])
         print "RgbPhatPlanes", kwargs
