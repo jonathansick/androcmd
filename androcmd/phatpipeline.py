@@ -19,6 +19,7 @@ from padova.isocdata import join_isochrone_sets, Isochrone
 
 from starfisher import Lockfile
 from starfisher import ExtantCrowdingTable
+from starfisher.dust import SF11ExtinctionCurve, ExtinctionDistribution
 from starfisher.pipeline import (
     PipelineBase, IsochroneSetBase, DatasetBase, LockBase,
     CrowdingBase, ExtinctionBase)
@@ -193,6 +194,37 @@ class NoDust(ExtinctionBase):
 
     def build_extinction(self):
         super(NoDust, self).build_extinction()
+
+
+class PhatGaussianDust(ExtinctionBase):
+    """Mixin for Gaussian dust distributions for PHAT filters."""
+    def __init__(self, **kwargs):
+        self._young_av = kwargs.pop('young_av', 1.0)
+        self._old_av = kwargs.pop('old_av', 0.5)
+        self._av_sigma_ratio = kwargs.pop('av_sigma_ratio', 0.5)
+        super(PhatGaussianDust, self).__init__(**kwargs)
+
+    def build_extinction(self):
+        self.young_av = ExtinctionDistribution()
+        self.young_av.set_samples(np.random.normal(
+            loc=self._young_av,
+            scale=self._young_av * self._av_sigma_ratio,
+            size=1000))
+
+        self.old_av = ExtinctionDistribution()
+        self.old_av.set_samples(np.random.normal(
+            loc=self._old_av,
+            scale=self._old_av * self._av_sigma_ratio,
+            size=1000))
+
+        self.rel_extinction = np.ones(self.n_bands, dtype=float)
+        curve = SF11ExtinctionCurve()
+        self.rel_extinction[0] = curve.extinction_ratio('WFC3 F275W')
+        self.rel_extinction[1] = curve.extinction_ratio('WFC3 F336W')
+        self.rel_extinction[2] = curve.extinction_ratio('WFC3 F475W')
+        self.rel_extinction[3] = curve.extinction_ratio('WFC3 F814W')
+        self.rel_extinction[4] = curve.extinction_ratio('WFC3 F110W')
+        self.rel_extinction[5] = curve.extinction_ratio('WFC3 F160W')
 
 
 class SolarZPhatPipeline(CompletePhatPlanes, SolarZIsocs,
