@@ -19,6 +19,7 @@ class BasicPhatPlanes(PlaneBase):
     def __init__(self, **kwargs):
         self._planes = OrderedDict([
             ('f475w_f814w', make_f475w_f814w()),
+            ('f475w_f814w_ms', make_f475w_f814w_ms()),
             ('f475w_f814w_rgb', make_f475w_f814w_rgb()),
             ('f475w_f160w', make_f475w_f160w()),
             ('f110w_f160w', make_f110w_f160w()),
@@ -105,6 +106,22 @@ def make_f475w_f814w_rgb(dpix=0.05, mag_lim=30.):
                        (min(lim.y), max(lim.y)),
                        mag_lim,
                        suffix='rgbopt',
+                       x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
+                       y_label=r'$\mathrm{F814W}$',
+                       dpix=dpix)
+    # plane.mask_region((3, 5), (28, 25))
+    # plane.mask_region((3.5, 5), (25, 23))
+    # plane.mask_region((4, 5), (23, 22.5))
+    return plane
+
+
+def make_f475w_f814w_ms(dpix=0.05, mag_lim=30.):
+    lim = Lim(x=(-0.5, 1.), y=(26, 21.))
+    plane = ColorPlane(('F475W', 'F814W'), 'F814W',
+                       lim.x,
+                       (min(lim.y), max(lim.y)),
+                       mag_lim,
+                       suffix='msopt',
                        x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
                        y_label=r'$\mathrm{F814W}$',
                        dpix=dpix)
