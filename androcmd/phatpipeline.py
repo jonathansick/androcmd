@@ -214,16 +214,20 @@ class PhatGaussianDust(ExtinctionBase):
 
     def build_extinction(self):
         self.young_av = ExtinctionDistribution()
-        self.young_av.set_samples(np.random.normal(
+        av = np.random.normal(
             loc=self._young_av,
             scale=self._young_av * self._av_sigma_ratio,
-            size=1000))
+            size=1000)
+        av[av < 0.] = 0.
+        self.young_av.set_samples(av)
 
         self.old_av = ExtinctionDistribution()
-        self.old_av.set_samples(np.random.normal(
+        av = np.random.normal(
             loc=self._old_av,
             scale=self._old_av * self._av_sigma_ratio,
-            size=1000))
+            size=1000)
+        av[av < 0.] = 0.
+        self.old_av.set_samples(av)
 
         self.rel_extinction = np.ones(self.n_bands, dtype=float)
         curve = SF11ExtinctionCurve()
