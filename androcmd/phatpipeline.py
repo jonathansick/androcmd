@@ -5,6 +5,11 @@ Pipelines for fitting PHAT CMDs.
 """
 import os
 from glob import glob
+from functools import partial
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import palettable
 
 import numpy as np
 from astropy.coordinates import Distance
@@ -115,6 +120,9 @@ class PhatCatalog(DatasetBase):
             self._phat_data.rename_column(old_name, band)
 
     def get_phot(self, band):
+        if self._phat_data is None:
+            self._load_phat_data()  # lazy loading
+
         if not isinstance(band, basestring):
             band1, band2 = band
             return self._phat_data[band1] - self._phat_data[band2]
@@ -241,3 +249,50 @@ class SolarRgbPipeline(RgbPhatPlanes, SolarZIsocs,
     def __init__(self, **kwargs):
         print "SolarRgbPipeline", kwargs
         super(SolarRgbPipeline, self).__init__(**kwargs)
+
+
+def build_phat_filter_set(**kwargs):
+    r_wfc3 = AgeGridRequest(photsys='wfc3_wide', **kwargs)
+    r_acs = AgeGridRequest(photsys='acs_wfc', **kwargs)
+    isoc_set = join_isochrone_sets(r_wfc3.isochrone_set,
+                                   r_acs.isochrone_set,
+                                   left_bands=['F275W1', 'F336W',
+                                               'F110W', 'F160W'],
+                                   right_bands=['F475W', 'F814W'])
+    return isoc_set
+
+
+get_demo_age_grid = partial(build_phat_filter_set,
+                            z=0.019, min_log_age=6.6, max_log_age=10.13,
+                            delta_log_age=0.2)
+
+
+def plot_isochrone_phases(ax, band1, band2, show_cb=False, cb_ax=None):
+    isoc_set = get_demo_age_grid(**dict(isoc_kind='parsec_CAF09_v1.2S',
+                                        photsys_version='yang'))
+    phase_labels = {0: 'Pre-MS', 1: 'MS', 2: 'SGB', 3: 'RGB',
+                    4: 'CHeB(1)', 5: 'CHeB(2)', 6: 'CHeB(3)',
+                    7: 'E-AGB', 8: 'TP-AGB'}
+    cmap = mpl.colors.ListedColormap(
+        palettable.colorbrewer.qualitative.Set1_9.mpl_colors)
+    scalar_map = mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(vmin=-0.5,
+                                                                 vmax=8.5),
+                                       cmap=cmap)
+    scalar_map.set_array(np.array(range(0, 9)))
+
+    d = Distance(785 * u.kpc)
+    for isoc in isoc_set:
+        phases = np.unique(isoc['stage'])
+        srt = np.argsort(phases)
+        phases = phases[srt]
+        for p in phases:
+            s = np.where(isoc['stage'] == p)[0]
+            ax.plot(isoc[band1][s] - isoc[band2][s],
+                    isoc[band2][s] + d.distmod.value,
+                    c=scalar_map.to_rgba(p),
+                    lw=0.8)
+    if show_cb:
+        cb = plt.colorbar(mappable=scalar_map,
+                          cax=cb_ax, ax=ax, ticks=range(0, 9))
+        cb.ax.set_yticklabels([phase_labels[p] for p in range(0, 9)])
+        cb.set_label(r"Stage")
