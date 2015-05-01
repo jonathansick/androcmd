@@ -221,6 +221,7 @@ class PhatGaussianDust(ExtinctionBase):
                 size=1000)
             av[av < 0.] = 0.
             self.young_av.set_samples(av)
+        else:
             self.young_av.set_samples(np.zeros(1000))
 
         self.old_av = ExtinctionDistribution()
