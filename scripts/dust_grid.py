@@ -30,8 +30,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Grid of synths for a set of Av")
     parser.add_argument('brick', type=int)
-    parser.add_argument('max_av', type=float, default=1.5)
-    parser.add_argument('delta_av', type=float, default=0.1)
+    parser.add_argument('--max-av', type=float, default=1.5)
+    parser.add_argument('--delta-av', type=float, default=0.1)
     return parser.parse_args()
 
 
