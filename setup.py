@@ -2,6 +2,7 @@
 
 import os
 import sys
+from glob import glob
 
 try:
     from setuptools import setup
@@ -43,6 +44,7 @@ setup(
     license='MIT',
     zip_safe=False,
     keywords='androcmd',
+    scripts=glob('scripts/*.py'),
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
