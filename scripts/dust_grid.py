@@ -22,8 +22,12 @@ def main():
     args = parse_args()
 
     av_grid = np.arange(0., args.max_av, args.delta_av)
-    for av in av_grid:
+    if args.av is not None:
+        av = float(args.av)
         run_pipeline(brick=args.brick, av=av, run_fit=args.fit)
+    else:
+        for av in av_grid:
+            run_pipeline(brick=args.brick, av=av, run_fit=args.fit)
 
 
 def parse_args():
@@ -33,6 +37,7 @@ def parse_args():
     parser.add_argument('--max-av', type=float, default=1.5)
     parser.add_argument('--delta-av', type=float, default=0.1)
     parser.add_argument('--fit', action='store_true', default=False)
+    parser.add_argument('--av', default=None)
     return parser.parse_args()
 
 
