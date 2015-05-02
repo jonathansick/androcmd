@@ -32,8 +32,7 @@ def parse_args():
     parser.add_argument('brick', type=int)
     parser.add_argument('--max-av', type=float, default=1.5)
     parser.add_argument('--delta-av', type=float, default=0.1)
-    parser.add_argument('--fit', type=bool, default=False,
-                        action='store_true')
+    parser.add_argument('--fit', action='store_true', default=False)
     return parser.parse_args()
 
 
