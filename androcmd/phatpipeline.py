@@ -99,6 +99,69 @@ class SolarZIsocs(IsochroneSetBase):
         super(SolarZIsocs, self).setup_isochrones()
 
 
+class ExtendedSolarIsocs(IsochroneSetBase):
+    """Solar metallicity isochrone set."""
+    def __init__(self, **kwargs):
+        self.isoc_args = kwargs.pop('isoc_args', dict())
+        self.isoc_phases = kwargs.pop('isoc_phases', None)
+        self.z_grid = (0.0096, 0.012, 0.015, 0.019, 0.024, 0.030, 0.04)
+        print "ExtendedSolarZIsocs", kwargs
+        super(ExtendedSolarIsocs, self).__init__(**kwargs)
+
+    @property
+    def bands(self):
+        return ('F475W', 'F814W', 'F275W', 'F336W', 'F110W', 'F160W')
+
+    @property
+    def distance(self):
+        return Distance(785. * u.kpc)
+
+    def setup_isochrones(self):
+        """Download Padova isochrones."""
+        print "Running SolarZIsocs setup_isochrones"
+        WFC3_BANDS = ['F275W1', 'F336W', 'F110W', 'F160W']
+        ACS_BANDS = ['F475W', 'F814W']
+
+        if not os.path.exists(os.path.join(STARFISH, self.isoc_dir)):
+            make_isocs = True
+        elif len(glob(os.path.join(STARFISH, self.isoc_dir, "*"))) == 0:
+            make_isocs = True
+        else:
+            make_isocs = False
+
+        if self.isoc_args is None:
+            self.isoc_args = {}
+        if make_isocs:
+            for z in self.z_grid:
+                r_wfc3 = AgeGridRequest(z,
+                                        min_log_age=6.6,
+                                        max_log_age=10.13,
+                                        delta_log_age=0.02,
+                                        photsys='wfc3_wide', **self.isoc_args)
+                r_acs = AgeGridRequest(z,
+                                       min_log_age=6.6,
+                                       max_log_age=10.13,
+                                       delta_log_age=0.02,
+                                       photsys='acs_wfc', **self.isoc_args)
+                isoc_set = join_isochrone_sets(r_wfc3.isochrone_set,
+                                               r_acs.isochrone_set,
+                                               left_bands=WFC3_BANDS,
+                                               right_bands=ACS_BANDS)
+                for isoc in isoc_set:
+                    isoc = Isochrone(isoc)
+                    isoc.rename_column('F275W1', 'F275W')
+                    if self.isoc_phases is not None:
+                        sels = []
+                        for p in self.isoc_phases:
+                            sels.append(np.where(isoc['stage'] == p)[0])
+                        s = np.concatenate(sels)
+                        isoc = isoc[s]
+                    isoc.export_for_starfish(os.path.join(STARFISH,
+                                                          self.isoc_dir),
+                                             bands=list(self.bands))
+        super(SolarZIsocs, self).setup_isochrones()
+
+
 class PhatCatalog(DatasetBase):
     """Mixin for PHAT photometry data.
 
@@ -177,6 +240,39 @@ class SolarLockfile(LockBase):
             mean_age = (logage0 + logage1) / 0.2
             name = "z{0}_{1:05.2f}".format(z_str, mean_age)
             self.lockfile.lock_box(name, (logage0, logage1), (0.014, 0.025))
+
+
+class ExtendedSolarLockfile(LockBase):
+    """Lockfile mixin to create an sub-, solar and super solar Z Hess set."""
+    def __init__(self, **kwargs):
+        print "ExtendedSolarLockfile", kwargs
+        super(ExtendedSolarLockfile, self).__init__(**kwargs)
+
+    def build_lockfile(self):
+        self.lockfile = Lockfile(self.builder.read_isofile(), self.synth_dir,
+                                 unbinned=False)
+
+        z_bins = [(0.009, 0.0135), (0.0135, 0.022), (0.022, 0.032)]
+        z_strs = ['0010', '0019', '0028']
+
+        # Bin young isochrones
+        for zbin, z_str in zip(z_bins, z_strs):
+            young_grid = np.linspace(6.5, 8.95, 10)
+            for i, logage0 in enumerate(young_grid[:-1]):
+                logage0 = logage0
+                logage1 = young_grid[i + 1]
+                mean_age = (logage0 + logage1) / 0.2
+                name = "z{0}_{1:05.2f}".format(z_str, mean_age)
+                self.lockfile.lock_box(name, (logage0, logage1), zbin)
+
+            # Bin old isochrones
+            old_grid = np.arange(1e9, 14 * 1e9, 1e9)
+            for i, age0 in enumerate(old_grid[:-1]):
+                logage0 = np.log10(age0 - 0.05 * 1e9)
+                logage1 = np.log10(old_grid[i + 1])
+                mean_age = (logage0 + logage1) / 0.2
+                name = "z{0}_{1:05.2f}".format(z_str, mean_age)
+                self.lockfile.lock_box(name, (logage0, logage1), zbin)
 
 
 class PhatCrowding(CrowdingBase):
