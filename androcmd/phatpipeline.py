@@ -118,7 +118,7 @@ class ExtendedSolarIsocs(IsochroneSetBase):
 
     def setup_isochrones(self):
         """Download Padova isochrones."""
-        print "Running SolarZIsocs setup_isochrones"
+        print "Running ExtendedSolarIsocs setup_isochrones"
         WFC3_BANDS = ['F275W1', 'F336W', 'F110W', 'F160W']
         ACS_BANDS = ['F475W', 'F814W']
 
@@ -159,7 +159,7 @@ class ExtendedSolarIsocs(IsochroneSetBase):
                     isoc.export_for_starfish(os.path.join(STARFISH,
                                                           self.isoc_dir),
                                              bands=list(self.bands))
-        super(SolarZIsocs, self).setup_isochrones()
+        super(ExtendedSolarIsocs, self).setup_isochrones()
 
 
 class PhatCatalog(DatasetBase):
