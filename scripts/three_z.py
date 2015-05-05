@@ -25,8 +25,9 @@ def main():
                   'ms': ['f475w_f814w_ms']}
     if len(fit_planes) > 0:
         dataset = PhatCatalog(args.brick)
-    for fit_name in fit_planes:
-        pipeline.fit(fit_name, fit_planes[fit_name], dataset)
+    for fit_name in args.fit:
+        plane = fit_planes[fit_name]
+        pipeline.fit(fit_name, plane, dataset)
 
 
 def parse_args():
