@@ -37,9 +37,7 @@ def make_pipeline(brick, dustM, dustC):
     isoc_args['dust_sourceM'] = dustM
     isoc_args['dust_sourceC'] = dustC
 
-    pipeline = Pipeline(root_dir="b{0:d}_{1}_{2}".format(brick,
-                                                         dustM,
-                                                         dustC),
+    pipeline = Pipeline(root_dir="b{0:d}_{1}".format(brick, dustM),
                         isoc_args=isoc_args)
 
     return pipeline
