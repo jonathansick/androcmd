@@ -54,12 +54,14 @@ class Pipeline(BasicPhatPlanes,
 
 def plot_fit(pipeline, dataset):
     """Plot for the thesis"""
-    fit_key = 'f475w_f160w'
-    plane_key = 'f475w_f160w'
-    plotpath = "b23_three_z_f475w_f160w"
-
-    plot_fit_grid(pipeline, dataset, [fit_key], [plane_key], plotpath,
+    plot_fit_grid(pipeline, dataset, ['f475w_f160w'], ['f475w_f160w'],
+                  "b23_three_z_f475w_f160w",
                   ysize=3.5)
+
+    plot_fit_grid(pipeline, dataset, ['ms', 'ms'],
+                  ['f475w_f814w_ms', 'f475w_f160w'],
+                  "b23_three_z_ms_fit",
+                  ysize=5)
 
 
 if __name__ == '__main__':
