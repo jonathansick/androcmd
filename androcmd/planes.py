@@ -158,7 +158,7 @@ def make_f475w_f160w(dpix=0.05, mag_lim=30.):
                        mag_lim,
                        suffix='f475f160',
                        x_label=r'$\mathrm{F475W}-\mathrm{F160W}$',
-                       y_label=r'$\mathrm{F110W}$',
+                       y_label=r'$\mathrm{F160W}$',
                        dpix=dpix)
     return plane
 
