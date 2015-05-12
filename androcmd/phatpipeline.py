@@ -24,12 +24,13 @@ from padova.isocdata import join_isochrone_sets, Isochrone
 
 from starfisher import Lockfile
 from starfisher import ExtantCrowdingTable
-from starfisher.dust import SF11ExtinctionCurve, ExtinctionDistribution
+from starfisher.dust import ExtinctionDistribution
 from starfisher.pipeline import (
     PipelineBase, IsochroneSetBase, DatasetBase, LockBase,
     CrowdingBase, ExtinctionBase)
 
 from androcmd.planes import RgbPhatPlanes, CompletePhatPlanes
+from androcmd.dust import mw_Av, phat_rel_extinction
 
 
 PHAT_BANDS = ('F475W', 'F814W', 'F275W', 'F336W', 'F110W', 'F160W')
@@ -297,7 +298,13 @@ class NoDust(ExtinctionBase):
         super(NoDust, self).__init__(**kwargs)
 
     def build_extinction(self):
-        super(NoDust, self).build_extinction()
+        # Add MW dust screen
+        self.young_av = ExtinctionDistribution()
+        self.young_av.set_uniform(mw_Av())
+        self.old_av = ExtinctionDistribution()
+        self.old_av.set_uniform(mw_Av())
+
+        self.rel_extinction = phat_rel_extinction()
 
 
 class PhatGaussianDust(ExtinctionBase):
@@ -309,6 +316,7 @@ class PhatGaussianDust(ExtinctionBase):
         super(PhatGaussianDust, self).__init__(**kwargs)
 
     def build_extinction(self):
+        # NOTE includes the E(V
         self.young_av = ExtinctionDistribution()
         if self._young_av > 0.:
             av = np.random.normal(
@@ -316,9 +324,9 @@ class PhatGaussianDust(ExtinctionBase):
                 scale=self._young_av * self._av_sigma_ratio,
                 size=1000)
             av[av < 0.] = 0.
-            self.young_av.set_samples(av)
+            self.young_av.set_samples(av + mw_Av())
         else:
-            self.young_av.set_samples(np.zeros(1000))
+            self.young_av.set_samples(np.zeros(1000) + mw_Av())
 
         self.old_av = ExtinctionDistribution()
         if self._old_av > 0.:
@@ -327,18 +335,11 @@ class PhatGaussianDust(ExtinctionBase):
                 scale=self._old_av * self._av_sigma_ratio,
                 size=1000)
             av[av < 0.] = 0.
-            self.old_av.set_samples(av)
+            self.old_av.set_samples(av + mw_Av())
         else:
-            self.old_av.set_samples(np.zeros(1000))
+            self.old_av.set_samples(np.zeros(1000) + mw_Av())
 
-        self.rel_extinction = np.ones(self.n_bands, dtype=float)
-        curve = SF11ExtinctionCurve()
-        self.rel_extinction[0] = curve.extinction_ratio('WFC3 F275W')
-        self.rel_extinction[1] = curve.extinction_ratio('WFC3 F336W')
-        self.rel_extinction[2] = curve.extinction_ratio('WFC3 F475W')
-        self.rel_extinction[3] = curve.extinction_ratio('WFC3 F814W')
-        self.rel_extinction[4] = curve.extinction_ratio('WFC3 F110W')
-        self.rel_extinction[5] = curve.extinction_ratio('WFC3 F160W')
+        self.rel_extinction = phat_rel_extinction()
 
 
 class SolarZPhatPipeline(CompletePhatPlanes, SolarZIsocs,
