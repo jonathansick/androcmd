@@ -342,6 +342,32 @@ class PhatGaussianDust(ExtinctionBase):
         self.rel_extinction = phat_rel_extinction()
 
 
+class PhatStepDust(ExtinctionBase):
+    """Mixin for Uniform dust distributions for PHAT filters."""
+    def __init__(self, **kwargs):
+        self._young_av = kwargs.pop('young_av', 0.0) + mw_Av()
+        self._old_av = kwargs.pop('old_av', 0.0) + mw_Av()
+        self._young_dav = kwargs.pop('young_dav', 1.0)
+        self._old_dav = kwargs.pop('old_dav', 1.0)
+        super(PhatStepDust, self).__init__(**kwargs)
+
+    def build_extinction(self):
+        # NOTE includes MW extinction from __init__
+        self.young_av = ExtinctionDistribution()
+        self.young_av.set_samples(np.random.uniform(
+            low=self._young_av,
+            high=self._young_av + self._young_dav,
+            size=1000))
+
+        self.old_av = ExtinctionDistribution()
+        self.old_av.set_samples(np.random.uniform(
+            low=self._old_av,
+            high=self._old_av + self._old_dav,
+            size=1000))
+
+        self.rel_extinction = phat_rel_extinction()
+
+
 class SolarZPhatPipeline(CompletePhatPlanes, SolarZIsocs,
                          SolarLockfile, NoDust, PhatCrowding, PipelineBase):
     """A pipeline for fitting PHAT bricks with solar metallicity isochrones."""
