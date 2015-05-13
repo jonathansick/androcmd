@@ -292,6 +292,31 @@ class PhatCrowding(CrowdingBase):
                                       bands=self.bands)
         self.crowd = ExtantCrowdingTable(crowd_path)
 
+    def mask_planes(self):
+        """Mask each CMD plane based on the incomplete or empty regions of
+        the PHAT artificial star testing projected into the Hess plane.
+
+        This hook is called automatically by the base pipeline before
+        synth is run.
+        """
+        # FIXME note that AST field 0 *is always* used
+        print "Using PhatCrowding.mask_planes"
+        ast = PhatAstTable()
+        for key, plane in self.planes.iteritems():
+            band = plane.y_color  # FIXME assumes CMD; only 1 y axis mag.
+            hess, x_grid, y_grid = ast.completeness_hess(
+                0, band,
+                plane.x_color, plane.y_color,
+                plane.x_lim, plane.y_lim, 0.5)
+            yidx, xidx = np.where(hess < 0.5)  # mask less than 50% complete
+            for yi, xi in zip(yidx, xidx):
+                plane.mask_region((x_grid[yi], x_grid[yi + 1]),
+                                  (y_grid[xi], y_grid[xi + 1]))
+            yidx, xidx = np.where(~np.isfinite(hess))  # mask empty AST
+            for yi, xi in zip(yidx, xidx):
+                plane.mask_region((x_grid[yi], x_grid[yi + 1]),
+                                  (y_grid[xi], y_grid[xi + 1]))
+
 
 class NoDust(ExtinctionBase):
     """Mixin for no dust."""
