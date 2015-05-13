@@ -131,6 +131,19 @@ def make_f475w_f814w_ms(dpix=0.05, mag_lim=30.):
     return plane
 
 
+def make_lewis_ms(dpix=0.05, mag_lim=30.):
+    lim = Lim(x=(-0.5, 1.), y=(26, 21.))
+    plane = ColorPlane(('F475W', 'F814W'), 'F475W',
+                       lim.x,
+                       (min(lim.y), max(lim.y)),
+                       mag_lim,
+                       suffix='lewis',
+                       x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
+                       y_label=r'$\mathrm{F475W}$',
+                       dpix=dpix)
+    return plane
+
+
 def make_f110w_f160w(dpix=0.05, mag_lim=30.):
     lim = Lim(x=(0.3, 1.3), y=(24., 16.5))
     plane = ColorPlane(('F110W', 'F160W'), 'F160W',
