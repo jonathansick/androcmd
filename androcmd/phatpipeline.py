@@ -12,11 +12,12 @@ import matplotlib.pyplot as plt
 import palettable
 
 import numpy as np
+import astropy
 from astropy.coordinates import Distance
 import astropy.units as u
 from astropy.table import Table
 
-from m31hst import phat_v2_phot_path
+from m31hst import phat_v2_phot_path, phat_brick_path
 from m31hst.phatast import PhatAstTable
 
 from padova import AgeGridRequest
@@ -30,7 +31,7 @@ from starfisher.pipeline import (
     CrowdingBase, ExtinctionBase)
 
 from androcmd.planes import RgbPhatPlanes, CompletePhatPlanes
-from androcmd.dust import mw_Av, phat_rel_extinction
+from androcmd.dust import mw_Av, phat_rel_extinction, LewisDustLaw
 
 
 PHAT_BANDS = ('F475W', 'F814W', 'F275W', 'F336W', 'F110W', 'F160W')
@@ -364,6 +365,39 @@ class PhatStepDust(ExtinctionBase):
             low=self._old_av,
             high=self._old_av + self._old_dav,
             size=1000))
+
+        self.rel_extinction = phat_rel_extinction()
+
+
+class LewisBrickDust(ExtinctionBase):
+    """Mixin for a uniform dust distribution fitted from Lewis et al 15 Fig 17.
+
+    The maximum extinction is estimated from a Draine et al 2015 dust map.
+    Requires that the brick be known.
+    """
+    def __init__(self):
+        super(LewisBrickDust, self).__init__()
+
+    def build_extinction(self):
+        """Young and old dust at equal here."""
+        # Get the coordinate of the brick
+        brick_fits = phat_brick_path(self.brick, 'F814W')
+        wcs = astropy.io.WCS(brick_fits[0].header)
+        poly = wcs.calc_footprint()
+        ra0 = poly[0, :].mean()
+        dec0 = poly[1, :].mean()
+
+        lewis = LewisDustLaw()
+        max_av = lewis.estimate_extinction(ra0, dec0)
+        av = np.random.uniform(low=mw_Av(),
+                               high=max_av,
+                               size=1000)
+
+        self.young_av = ExtinctionDistribution()
+        self.young_av.set_samples(av)
+
+        self.old_av = ExtinctionDistribution()
+        self.old_av.set_samples(av)
 
         self.rel_extinction = phat_rel_extinction()
 
