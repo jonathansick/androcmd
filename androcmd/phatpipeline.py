@@ -12,12 +12,12 @@ import matplotlib.pyplot as plt
 import palettable
 
 import numpy as np
-import astropy
+# import astropy
 from astropy.coordinates import Distance
 import astropy.units as u
 from astropy.table import Table
 
-from m31hst import phat_v2_phot_path, phat_brick_path
+from m31hst import phat_v2_phot_path
 from m31hst.phatast import PhatAstTable
 
 from padova import AgeGridRequest
@@ -236,6 +236,19 @@ class PhatCatalog(DatasetBase):
             os.makedirs(fit_dir)
         np.savetxt(full_path, photdata, delimiter=' ', fmt='%.4f')
 
+    @property
+    def polygon(self):
+        """Polygon bounding box around the dataset."""
+        if self._phat_data is None:
+            self._load_phat_data()  # lazy loading
+
+        ra = self._phat_data['ra']
+        dec = self._phat_data['dec']
+        return np.array([[ra.min(), dec.min()],
+                         [ra.min(), dec.max()],
+                         [ra.max(), dec.max()],
+                         [ra.max(), dec.min()]])
+
 
 class SolarLockfile(LockBase):
     """Lockfile mixin to create an iso-metallicity Hess set."""
@@ -430,9 +443,11 @@ class LewisBrickDust(ExtinctionBase):
     def build_extinction(self):
         """Young and old dust at equal here."""
         # Get the coordinate of the brick
-        brick_fits = phat_brick_path(self.brick, 'F814W')
-        wcs = astropy.io.WCS(brick_fits[0].header)
-        poly = wcs.calc_footprint()
+        # brick_fits = phat_brick_path(self.brick, 'F814W')
+        # wcs = astropy.io.WCS(brick_fits[0].header)
+        # poly = wcs.calc_footprint()
+        data = PhatCatalog(self.brick)  # FIXME pretty brick-specific
+        poly = data.polygon
 
         lewis = LewisDustLaw()
         max_av = lewis.estimate_mean_extinction(poly)

@@ -70,9 +70,7 @@ class LewisDustLaw(object):
         y = y_image.reshape(nx * ny)
         x = x_image.reshape(nx * ny)
         ra, dec = self._wcs.all_pix2world(x, y, 0)
-        # ra_image = ra.reshape((ny, nx))
-        # dec_image = dec.reshape((ny, nx))
-        points = np.hstack(ra.T, dec.T)
+        points = np.vstack((ra, dec)).T
 
         # Find all pixels in the footprint
         path = Path(poly, closed=False)
@@ -80,5 +78,6 @@ class LewisDustLaw(object):
         s = np.where(in_poly)[0]
         dust_pixels = sigma_dust[y[s], x[s]]
         mean = np.nanmean(dust_pixels)
-        # std = np.nanstd(dust_pixels)
+
+        # Estimate Av from the Lewis et al attenuation law
         return 10. ** (-5.4) * mean
