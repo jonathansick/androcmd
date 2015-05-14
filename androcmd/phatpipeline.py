@@ -340,19 +340,19 @@ class PhatCrowding(CrowdingBase):
         print "Using PhatCrowding.mask_planes"
         ast = PhatAstTable()
         for key, plane in self.planes.iteritems():
-            band = plane.y_color  # FIXME assumes CMD; only 1 y axis mag.
+            band = plane.y_mag  # FIXME assumes CMD; only 1 y axis mag.
             hess, x_grid, y_grid = ast.completeness_hess(
                 0, band,
-                plane.x_color, plane.y_color,
-                plane.x_lim, plane.y_lim, 0.5)
+                plane.x_mag, plane.y_mag,
+                plane.xlim, plane.ylim, 0.5)
             yidx, xidx = np.where(hess < 0.5)  # mask less than 50% complete
             for yi, xi in zip(yidx, xidx):
-                plane.mask_region((x_grid[yi], x_grid[yi + 1]),
-                                  (y_grid[xi], y_grid[xi + 1]))
+                plane.mask_region((x_grid[xi], x_grid[xi + 1]),
+                                  (y_grid[yi], y_grid[yi + 1]))
             yidx, xidx = np.where(~np.isfinite(hess))  # mask empty AST
             for yi, xi in zip(yidx, xidx):
-                plane.mask_region((x_grid[yi], x_grid[yi + 1]),
-                                  (y_grid[xi], y_grid[xi + 1]))
+                plane.mask_region((x_grid[xi], x_grid[xi + 1]),
+                                  (y_grid[yi], y_grid[yi + 1]))
 
 
 class NoDust(ExtinctionBase):
@@ -437,8 +437,9 @@ class LewisBrickDust(ExtinctionBase):
     The maximum extinction is estimated from a Draine et al 2015 dust map.
     Requires that the brick be known.
     """
-    def __init__(self):
-        super(LewisBrickDust, self).__init__()
+    def __init__(self, **kwargs):
+        self.brick = kwargs.pop('brick', 23)
+        super(LewisBrickDust, self).__init__(**kwargs)
 
     def build_extinction(self):
         """Young and old dust at equal here."""

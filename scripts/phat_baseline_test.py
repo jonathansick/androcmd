@@ -11,7 +11,7 @@ import argparse
 from starfisher.pipeline import PipelineBase
 from androcmd.planes import BaselineTestPhatPlanes
 from androcmd.phatpipeline import (PhatCatalog, SolarZIsocs, SolarLockfile,
-                                   PhatDust, PhatCrowding,
+                                   LewisBrickDust, PhatCrowding,
                                    ExtendedSolarIsocs, ExtendedSolarLockfile)
 
 
@@ -27,7 +27,8 @@ def main():
 
     isoc = dict(isoc_kind='parsec_CAF09_v1.2S',
                 photsys_version='yang')
-    pipeline = Pipeline(root_dir=args.model_name,
+    pipeline = Pipeline(brick=23,
+                        root_dir=args.model_name,
                         isoc_args=isoc)
 
     if args.fit is not None:
@@ -52,7 +53,7 @@ def parse_args():
 
 
 class SolarZPipeline(BaselineTestPhatPlanes, SolarZIsocs,
-                     SolarLockfile, PhatDust, PhatCrowding,
+                     SolarLockfile, LewisBrickDust, PhatCrowding,
                      PipelineBase):
     """Pipeline for the baseline test with only solar metallicity."""
     def __init__(self, **kwargs):
@@ -60,7 +61,7 @@ class SolarZPipeline(BaselineTestPhatPlanes, SolarZIsocs,
 
 
 class ThreeZPipeline(BaselineTestPhatPlanes, ExtendedSolarIsocs,
-                     ExtendedSolarLockfile, PhatDust, PhatCrowding,
+                     ExtendedSolarLockfile, LewisBrickDust, PhatCrowding,
                      PipelineBase):
     """Pipeline for baseline test with three metallicity tracks."""
     def __init__(self, **kwargs):
