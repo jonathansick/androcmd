@@ -194,16 +194,40 @@ class PhatCatalog(DatasetBase):
         else:
             return self._phat_data[band]
 
+    def _select_gst(self, x_band, y_band):
+        mags = []
+        if not isinstance(x_band, basestring):
+            mags.extend(x_band)
+        else:
+            mags.append(x_band)
+
+        if not isinstance(y_band, basestring):
+            mags.extend(y_band)
+        else:
+            mags.append(y_band)
+        mags = list(set(mags))
+
+        gsts = []
+        for band in mags:
+            key = '{0}_gst'.format(band.lower())
+            gsts.append(self._phat_data[key])
+        gsts_array = np.vstack(gsts).T
+        gsts = np.all(gsts_array, axis=1)
+        return np.where(gsts == True)[0]  # NOQA
+
     def write_phot(self, x_band, y_band, data_root, suffix):
+        """Only good (GST=1 in all relevant bands) photometry is written."""
         if self._phat_data is None:
             self._load_phat_data()  # lazy loading
 
         x = self.get_phot(x_band)
         y = self.get_phot(y_band)
+        gst_sel = self._select_gst(x_band, y_band)
+
         phot_dtype = np.dtype([('x', np.float), ('y', np.float)])
-        photdata = np.empty(len(self._phat_data), dtype=phot_dtype)
-        photdata['x'][:] = x
-        photdata['y'][:] = y
+        photdata = np.empty(len(gst_sel), dtype=phot_dtype)
+        photdata['x'][:] = x[gst_sel]
+        photdata['y'][:] = y[gst_sel]
 
         path = data_root + suffix
         full_path = os.path.join(STARFISH, path)
