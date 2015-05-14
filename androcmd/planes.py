@@ -14,6 +14,19 @@ from starfisher.pipeline import PlaneBase
 Lim = namedtuple('Lim', 'x y')
 
 
+class BaselineTestPhatPlanes(object):
+    """Color plane set for the PHAT color baseline comparison test."""
+    def __init__(self):
+        super(BaselineTestPhatPlanes, self).__init__()
+        self._planes = OrderedDict([
+            ('lewis', make_lewis_ms()),
+            ('acs_rgb', make_f475w_f814w_rgb()),
+            ('acs_all', make_f475w_f814w()),
+            ('oir_all', make_f475w_f160w()),
+            ('ir_rgb', make_f110w_f160w())
+        ])
+
+
 class BasicPhatPlanes(PlaneBase):
     """Color planes for PHAT data."""
     def __init__(self, **kwargs):
