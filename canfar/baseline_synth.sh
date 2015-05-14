@@ -14,6 +14,10 @@ cd $HOME/code/starfisher
 git pull
 python setup.py develop
 
+cd $HOME/code/padova
+git pull
+python setup.py develop
+
 cd $STARFISH
 
 NAME="$1_b$2"
