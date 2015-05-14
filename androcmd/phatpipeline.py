@@ -433,11 +433,9 @@ class LewisBrickDust(ExtinctionBase):
         brick_fits = phat_brick_path(self.brick, 'F814W')
         wcs = astropy.io.WCS(brick_fits[0].header)
         poly = wcs.calc_footprint()
-        ra0 = poly[0, :].mean()
-        dec0 = poly[1, :].mean()
 
         lewis = LewisDustLaw()
-        max_av = lewis.estimate_extinction(ra0, dec0)
+        max_av = lewis.estimate_mean_extinction(poly)
         av = np.random.uniform(low=mw_Av(),
                                high=max_av,
                                size=1000)

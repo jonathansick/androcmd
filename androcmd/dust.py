@@ -12,6 +12,8 @@ import astropy
 from m31hst.draine import spire350_dust_mass_map
 from starfisher.dust import SF11ExtinctionCurve
 
+from matplotlib.path import Path
+
 
 def mw_Av():
     """Build the A_V attenuation by the MW towards M31."""
@@ -42,7 +44,7 @@ class LewisDustLaw(object):
         self._naxis1 = self._f[0].header['NAXIS1']
         self._naxis2 = self._f[0].header['NAXIS2']
 
-    def estimate_extinction(self, ra, dec):
+    def estimate_point_extinction(self, ra, dec):
         """Estimate the maximum Av estinction to this coordinate."""
         x, y = self.wcs.all_world2pix([ra], [dec], 0)
         assert x > 0 and x < self._naxis1
@@ -51,3 +53,32 @@ class LewisDustLaw(object):
         y = int(y)
         Sigma_dust = self._f[0].data[y, x]
         return 10. ** (-5.4) * Sigma_dust
+
+    def estimate_mean_extinction(self, poly):
+        """Estimate the mean extinction Av in within a footprint.
+
+        Parameters
+        ----------
+        poly : ndarray
+            The RA,Dec polygon (a rectangle) defining the footprint.
+        """
+        sigma_dust = self._f[0].data
+        ny, nx = sigma_dust.shape
+
+        # Make a coordinate grid out of RA, Dec across the dust map
+        y_image, x_image = np.mgrid[0:ny, 0:nx]
+        y = y_image.reshape(nx * ny)
+        x = x_image.reshape(nx * ny)
+        ra, dec = self._wcs.all_pix2world(x, y, 0)
+        # ra_image = ra.reshape((ny, nx))
+        # dec_image = dec.reshape((ny, nx))
+        points = np.hstack(ra.T, dec.T)
+
+        # Find all pixels in the footprint
+        path = Path(poly, closed=False)
+        in_poly = path.contains_points(points)
+        s = np.where(in_poly)[0]
+        dust_pixels = sigma_dust[y[s], x[s]]
+        mean = np.nanmean(dust_pixels)
+        # std = np.nanstd(dust_pixels)
+        return 10. ** (-5.4) * mean
