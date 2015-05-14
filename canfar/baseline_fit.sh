@@ -21,8 +21,13 @@ python setup.py develop
 cd $STARFISH
 
 NAME="$1_b$2"
-phat_baseline_test.py $NAME $2
-tar -zcf ${NAME}.tar.gz $NAME
-vcp $STARFISH/${NAME}.tar.gz vos:jonathansick/phat
+OUTPUT_NAME="${NAME}_$3"
+
+vcp vos:jonathansick/phat/${NAME}.tar.gz ${NAME}.tar.gz
+tar -zxf ${NAME}.tar.gz $NAME
+
+phat_baseline_test.py $NAME $2 --fit $3
+tar -zcf ${OUTPUT_NAME}.tar.gz $NAME/$3
+vcp $STARFISH/${OUTPUT_NAME}.tar.gz vos:jonathansick/phat
 
 echo DONE
