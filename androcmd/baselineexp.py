@@ -46,11 +46,11 @@ def plot_fit_hess_grid(plot_path, p, dataset):
     nfits = len(fit_labels)
     nplanes = len(fit_labels)
 
-    xlocators = {'lewis': mpl.ticker.MultipleLocator(base=0.2),
+    xlocators = {'lewis': mpl.ticker.MultipleLocator(base=0.4),
                  'acs_rgb': mpl.ticker.MultipleLocator(base=1.),
                  'acs_all': mpl.ticker.MultipleLocator(base=2.),
                  'oir_all': mpl.ticker.MultipleLocator(base=2.),
-                 'ir_rgb': mpl.ticker.MultipleLocator(base=0.2)}
+                 'ir_rgb': mpl.ticker.MultipleLocator(base=0.3)}
 
     # p.fit('lewis', ['lewis'], dataset)
     p.fit('acs_rgb', ['acs_rgb'], dataset)
@@ -82,18 +82,27 @@ def plot_fit_hess_grid(plot_path, p, dataset):
     for fit_key in usable_fits:
         for plane_key in fit_labels:
             chi_hess = p.make_chisq_hess(dataset, fit_key, plane_key)
+            chi_data = chi_hess.masked_hess
+            chi_red = p.compute_fit_chi(dataset, fit_key, plane_key,
+                                        chi_hess=chi_hess)
+            print fit_key, plane_key, chi_red
+
             ax = axes[fit_key][plane_key]
             chi_map = p.plot_hess_array(ax,
-                                        chi_hess.masked_hess,
+                                        chi_data,
                                         plane_key,
                                         log=False,
                                         imshow=imshow_args)
+
+    for fit_key in fit_labels:
+        for plane_key in fit_labels:
+            ax = axes[fit_key][plane_key]
 
             if fit_key == plane_key:
                 highlight_color = '#3498db'
                 for loc in ['bottom', 'top', 'right', 'left']:
                     ax.spines[loc].set_color(highlight_color)
-                    ax.spines[loc].set_linewidth(3.)
+                    ax.spines[loc].set_linewidth(2.)
 
             ax.yaxis.set_major_locator(mpl.ticker.MultipleLocator(base=1))
             ax.yaxis.set_minor_locator(mpl.ticker.MultipleLocator(base=0.25))
