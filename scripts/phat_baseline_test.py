@@ -33,6 +33,11 @@ def main():
         dataset = PhatCatalog(args.brick)
         pipeline.fit(args.fit, [args.fit], dataset)
 
+    if args.plot_hess is not None:
+        from androcmd.baselineexp import plot_fit_hess_grid
+        dataset = PhatCatalog(args.brick)
+        plot_fit_hess_grid(args.plot_hess, pipeline, dataset)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -46,6 +51,7 @@ def parse_args():
     parser.add_argument('--pipeline',
                         choices=['solarz', 'threez'],
                         default='solarz')
+    parser.add_argument('--plot-hess', default=None)
     return parser.parse_args()
 
 
