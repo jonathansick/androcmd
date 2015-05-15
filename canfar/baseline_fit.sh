@@ -23,8 +23,10 @@ cd $STARFISH
 NAME="$1_b$2"
 OUTPUT_NAME="${NAME}_$3"
 
-vcp vos:jonathansick/phat/${NAME}.tar.gz ${NAME}.tar.gz
-tar -zxf ${NAME}.tar.gz $NAME
+if [ ! -f $NAME ]; then
+    vcp vos:jonathansick/phat/${NAME}.tar.gz ${NAME}.tar.gz
+    tar -zxf ${NAME}.tar.gz $NAME
+fi
 
 phat_baseline_test.py $NAME $2 --fit $3
 tar -zcf ${OUTPUT_NAME}.tar.gz $NAME/$3
