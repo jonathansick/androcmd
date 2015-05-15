@@ -38,6 +38,11 @@ def main():
         dataset = PhatCatalog(args.brick)
         plot_fit_hess_grid(args.plot_hess, pipeline, dataset)
 
+    if args.chi_table is not None:
+        from androcmd.baselineexp import tabulate_fit_chi
+        dataset = PhatCatalog(args.brick)
+        tabulate_fit_chi(args.chi_table, pipeline, dataset)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -52,6 +57,7 @@ def parse_args():
                         choices=['solarz', 'threez'],
                         default='solarz')
     parser.add_argument('--plot-hess', default=None)
+    parser.add_argument('--chi-table', default=None)
     return parser.parse_args()
 
 
