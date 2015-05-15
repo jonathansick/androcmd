@@ -33,8 +33,7 @@ def main():
 
     if args.fit is not None:
         dataset = PhatCatalog(args.brick)
-        plane = pipeline.planes[args.fit]
-        pipeline.fit(args.fit, plane, dataset)
+        pipeline.fit(args.fit, [args.fit], dataset)
 
 
 def parse_args():
