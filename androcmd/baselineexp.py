@@ -64,7 +64,7 @@ def plot_fit_hess_grid(plot_path, p, dataset):
     canvas = FigureCanvas(fig)
     # TODO add a colorbar axis
     gs = gridspec.GridSpec(nfits, nplanes + 1,
-                           left=0.1, right=0.9, bottom=0.05, top=0.95,
+                           left=0.08, right=0.91, bottom=0.05, top=0.97,
                            wspace=0.15, hspace=0.2,
                            width_ratios=[1.] * nplanes + [0.1],
                            height_ratios=None)
@@ -93,6 +93,17 @@ def plot_fit_hess_grid(plot_path, p, dataset):
                                         plane_key,
                                         log=False,
                                         imshow=imshow_args)
+
+            if chi_red < 100.:
+                txt = '$\chi^2_\mathrm{{red}}={0:.1f}$'.format(chi_red)
+            else:
+                txt = '$\chi^2_\mathrm{{red}}={0:.1e}$'.format(chi_red)
+            ax.text(0.05, 0.95,
+                    txt,
+                    ha='left', va='top',
+                    backgroundcolor='w',
+                    size=9,
+                    transform=ax.transAxes)
 
     for fit_key in fit_labels:
         for plane_key in fit_labels:
