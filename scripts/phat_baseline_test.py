@@ -8,11 +8,9 @@ Grid computation of dust attenuation for old vs. young stellar populations.
 
 import argparse
 
-from starfisher.pipeline import PipelineBase
-from androcmd.planes import BaselineTestPhatPlanes
-from androcmd.phatpipeline import (PhatCatalog, SolarZIsocs, SolarLockfile,
-                                   LewisBrickDust, PhatCrowding,
-                                   ExtendedSolarIsocs, ExtendedSolarLockfile)
+
+from androcmd.phatpipeline import PhatCatalog
+from androcmd.baselineexp import SolarZPipeline, ThreeZPipeline
 
 
 def main():
@@ -49,22 +47,6 @@ def parse_args():
                         choices=['solarz', 'threez'],
                         default='solarz')
     return parser.parse_args()
-
-
-class SolarZPipeline(BaselineTestPhatPlanes, SolarZIsocs,
-                     SolarLockfile, LewisBrickDust, PhatCrowding,
-                     PipelineBase):
-    """Pipeline for the baseline test with only solar metallicity."""
-    def __init__(self, **kwargs):
-        super(SolarZPipeline, self).__init__(**kwargs)
-
-
-class ThreeZPipeline(BaselineTestPhatPlanes, ExtendedSolarIsocs,
-                     ExtendedSolarLockfile, LewisBrickDust, PhatCrowding,
-                     PipelineBase):
-    """Pipeline for baseline test with three metallicity tracks."""
-    def __init__(self, **kwargs):
-        super(ThreeZPipeline, self).__init__(**kwargs)
 
 
 if __name__ == '__main__':
