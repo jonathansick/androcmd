@@ -89,7 +89,7 @@ def make_f475w_f814w(dpix=0.05, mag_lim=30.):
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
-                       suffix='f475f814',
+                       suffix='acsall',
                        x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
                        y_label=r'$\mathrm{F814W}$',
                        dpix=dpix)
@@ -105,7 +105,7 @@ def make_f475w_f814w_rgb_hack(dpix=0.05, mag_lim=30.):
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
-                       suffix='rgbopt',
+                       suffix='acsgbh',
                        x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
                        y_label=r'$\mathrm{F814W}$',
                        dpix=dpix,
@@ -122,7 +122,7 @@ def make_f475w_f814w_rgb(dpix=0.05, mag_lim=30.):
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
-                       suffix='rgbopt',
+                       suffix='acsgb',
                        x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
                        y_label=r'$\mathrm{F814W}$',
                        dpix=dpix)
@@ -138,7 +138,7 @@ def make_f475w_f814w_ms(dpix=0.05, mag_lim=30.):
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
-                       suffix='msopt',
+                       suffix='acsms',
                        x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
                        y_label=r'$\mathrm{F814W}$',
                        dpix=dpix)
@@ -154,7 +154,7 @@ def make_lewis_ms(dpix=0.05, mag_lim=30.):
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
-                       suffix='lewis',
+                       suffix='lws',
                        x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
                        y_label=r'$\mathrm{F475W}$',
                        dpix=dpix)
@@ -167,7 +167,7 @@ def make_f110w_f160w(dpix=0.05, mag_lim=30.):
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
-                       suffix='f110f160',
+                       suffix='nir',
                        x_label=r'$\mathrm{F110W}-\mathrm{F160W}$',
                        y_label=r'$\mathrm{F160W}$',
                        dpix=dpix)
@@ -186,7 +186,7 @@ def make_f475w_f160w(dpix=0.05, mag_lim=30.):
                        lim.x,
                        (min(lim.y), max(lim.y)),
                        mag_lim,
-                       suffix='f475f160',
+                       suffix='oirall',
                        x_label=r'$\mathrm{F475W}-\mathrm{F160W}$',
                        y_label=r'$\mathrm{F160W}$',
                        dpix=dpix)
