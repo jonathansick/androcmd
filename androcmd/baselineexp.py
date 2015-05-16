@@ -55,10 +55,10 @@ def plot_fit_hess_grid(plot_path, p, dataset):
     # p.fit('lewis', ['lewis'], dataset)
     p.fit('acs_rgb', ['acs_rgb'], dataset)
     p.fit('acs_all', ['acs_all'], dataset)
-    # p.fit('oir_all', ['oir_all'], dataset)
+    p.fit('oir_all', ['oir_all'], dataset)
     p.fit('ir_rgb', ['ir_rgb'], dataset)
 
-    usable_fits = ['acs_rgb', 'acs_all', 'ir_rgb']
+    usable_fits = ['acs_rgb', 'acs_all', 'ir_rgb', 'oir_all']
 
     fig = Figure(figsize=(7.5, 8.5), frameon=False)
     canvas = FigureCanvas(fig)
@@ -164,4 +164,4 @@ def tabulate_fit_chi(table_path, p, dataset):
     # p.fit('oir_all', ['oir_all'], dataset)
     p.fit('ir_rgb', ['ir_rgb'], dataset)
 
-    usable_fits = ['acs_rgb', 'acs_all', 'ir_rgb']
+    usable_fits = ['acs_rgb', 'acs_all', 'ir_rgb', 'oir_all']
