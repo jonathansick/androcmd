@@ -95,9 +95,13 @@ def plot_fit_hess_grid(plot_path, p, dataset):
                                         imshow=imshow_args)
 
             if chi_red < 100.:
-                txt = '$\chi^2_\mathrm{{red}}={0:.1f}$'.format(chi_red)
+                txt = '$\chi^2_\mathrm{{r}}={0:.1f}$'.format(chi_red)
             else:
-                txt = '$\chi^2_\mathrm{{red}}={0:.1e}$'.format(chi_red)
+                txt = '$\chi^2_\mathrm{{r}}={0:.1e}$'.format(chi_red)
+                a, b = txt.split('e+')
+                b = b.rstrip('$')
+                b = int(b)
+                txt = '{0} \\times 10^{{{1:d}}}$'.format(a, b)
             ax.text(0.05, 0.95,
                     txt,
                     ha='left', va='top',
