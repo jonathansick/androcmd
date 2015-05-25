@@ -61,7 +61,7 @@ def init_fits(p, fit_labels, dataset):
     return useable_fits
 
 
-def plot_fit_hess_grid(plot_path, p, dataset):
+def init_grid_plot(plot_path, p, dataset):
     fit_labels = OrderedDict((
         ('lewis', 'Fitting ACS-MS'),
         ('acs_rgb', 'Fitting ACS-RGB'),
@@ -95,6 +95,51 @@ def plot_fit_hess_grid(plot_path, p, dataset):
         fit_axes = {k: fig.add_subplot(gs[i, j])
                     for j, k in enumerate(fit_labels)}
         axes[fit_key] = fit_axes
+
+    for fit_key in fit_labels.keys()[:-1]:
+        for plane_key in fit_labels.keys():
+            ax = axes[fit_key][plane_key]
+            for tl in ax.get_xmajorticklabels():
+                tl.set_visible(False)
+            ax.set_xlabel('')
+
+    for fit_key in fit_labels.keys():
+        for plane_key in fit_labels.keys()[1:]:
+            ax = axes[fit_key][plane_key]
+            for tl in ax.get_ymajorticklabels():
+                tl.set_visible(False)
+            ax.set_ylabel('')
+
+    for fit_key in fit_labels.keys():
+        plane_key = fit_labels.keys()[0]
+        ax = axes[fit_key][plane_key]
+        ax.text(0.00, 1.03, fit_labels[fit_key],
+                ha='left', va='baseline',
+                transform=ax.transAxes,
+                size=10)
+
+    for fit_key in fit_labels:
+        for plane_key in fit_labels:
+            ax = axes[fit_key][plane_key]
+
+            if fit_key == plane_key:
+                highlight_color = '#3498db'
+                for loc in ['bottom', 'top', 'right', 'left']:
+                    ax.spines[loc].set_color(highlight_color)
+                    ax.spines[loc].set_linewidth(2.)
+
+            ax.yaxis.set_major_locator(mpl.ticker.MultipleLocator(base=1))
+            ax.yaxis.set_minor_locator(mpl.ticker.MultipleLocator(base=0.25))
+            ax.xaxis.set_major_locator(xlocators[plane_key])
+            ax.xaxis.set_minor_locator(mpl.ticker.MultipleLocator(base=0.1))
+
+    return fit_labels, useable_fits, \
+        fig, canvas, axes, cb_ax
+
+
+def plot_fit_hess_grid(plot_path, p, dataset):
+    fit_labels, useable_fits, \
+        fig, canvas, axes, cb_ax = init_grid_plot(plot_path, p, dataset)
 
     cube_map = perceptual_rainbow_16.mpl_colormap
     imshow_args = dict(vmax=20, cmap=cube_map)
@@ -129,83 +174,15 @@ def plot_fit_hess_grid(plot_path, p, dataset):
                     size=9,
                     transform=ax.transAxes)
 
-    for fit_key in fit_labels:
-        for plane_key in fit_labels:
-            ax = axes[fit_key][plane_key]
-
-            if fit_key == plane_key:
-                highlight_color = '#3498db'
-                for loc in ['bottom', 'top', 'right', 'left']:
-                    ax.spines[loc].set_color(highlight_color)
-                    ax.spines[loc].set_linewidth(2.)
-
-            ax.yaxis.set_major_locator(mpl.ticker.MultipleLocator(base=1))
-            ax.yaxis.set_minor_locator(mpl.ticker.MultipleLocator(base=0.25))
-            ax.xaxis.set_major_locator(xlocators[plane_key])
-            ax.xaxis.set_minor_locator(mpl.ticker.MultipleLocator(base=0.1))
-
     cb = fig.colorbar(ax=ax, cax=cb_ax, mappable=chi_map)
     cb.set_label(r'$\chi^2$')
-
-    for fit_key in fit_labels.keys()[:-1]:
-        for plane_key in fit_labels.keys():
-            ax = axes[fit_key][plane_key]
-            for tl in ax.get_xmajorticklabels():
-                tl.set_visible(False)
-            ax.set_xlabel('')
-
-    for fit_key in fit_labels.keys():
-        for plane_key in fit_labels.keys()[1:]:
-            ax = axes[fit_key][plane_key]
-            for tl in ax.get_ymajorticklabels():
-                tl.set_visible(False)
-            ax.set_ylabel('')
-
-    for fit_key in fit_labels.keys():
-        plane_key = fit_labels.keys()[0]
-        ax = axes[fit_key][plane_key]
-        ax.text(0.00, 1.03, fit_labels[fit_key],
-                ha='left', va='baseline',
-                transform=ax.transAxes,
-                size=10)
 
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
 
 def plot_diff_hess_grid(plot_path, p, dataset):
-    fit_labels = OrderedDict((
-        ('lewis', 'Fitting ACS-MS'),
-        ('acs_rgb', 'Fitting ACS-RGB'),
-        ('acs_all', 'Fitting ACS-ALL'),
-        ('oir_all', 'Fitting OIR-ALL'),
-        ('ir_rgb', 'Fitting NIR-RGB')))
-    nfits = len(fit_labels)
-    nplanes = len(fit_labels)
-
-    xlocators = {'lewis': mpl.ticker.MultipleLocator(base=0.4),
-                 'acs_rgb': mpl.ticker.MultipleLocator(base=1.),
-                 'acs_all': mpl.ticker.MultipleLocator(base=2.),
-                 'oir_all': mpl.ticker.MultipleLocator(base=2.),
-                 'ir_rgb': mpl.ticker.MultipleLocator(base=0.3)}
-
-    # only re-initialize fits that are available
-    useable_fits = init_fits(p, fit_labels, dataset)
-
-    fig = Figure(figsize=(7.5, 8.5), frameon=False)
-    canvas = FigureCanvas(fig)
-    # TODO add a colorbar axis
-    gs = gridspec.GridSpec(nfits, nplanes + 1,
-                           left=0.08, right=0.91, bottom=0.05, top=0.97,
-                           wspace=0.15, hspace=0.2,
-                           width_ratios=[1.] * nplanes + [0.1],
-                           height_ratios=None)
-
-    cb_ax = fig.add_subplot(gs[:, -1])
-    axes = {}
-    for i, fit_key in enumerate(fit_labels):
-        fit_axes = {k: fig.add_subplot(gs[i, j])
-                    for j, k in enumerate(fit_labels)}
-        axes[fit_key] = fit_axes
+    fit_labels, useable_fits, \
+        fig, canvas, axes, cb_ax = init_grid_plot(plot_path, p, dataset)
 
     div_map = RdBu_11.mpl_colormap
     imshow_args = dict(vmin=-50, vmax=50, cmap=div_map)
@@ -244,45 +221,8 @@ def plot_diff_hess_grid(plot_path, p, dataset):
                     size=9,
                     transform=ax.transAxes)
 
-    for fit_key in fit_labels:
-        for plane_key in fit_labels:
-            ax = axes[fit_key][plane_key]
-
-            if fit_key == plane_key:
-                highlight_color = '#3498db'
-                for loc in ['bottom', 'top', 'right', 'left']:
-                    ax.spines[loc].set_color(highlight_color)
-                    ax.spines[loc].set_linewidth(2.)
-
-            ax.yaxis.set_major_locator(mpl.ticker.MultipleLocator(base=1))
-            ax.yaxis.set_minor_locator(mpl.ticker.MultipleLocator(base=0.25))
-            ax.xaxis.set_major_locator(xlocators[plane_key])
-            ax.xaxis.set_minor_locator(mpl.ticker.MultipleLocator(base=0.1))
-
     cb = fig.colorbar(ax=ax, cax=cb_ax, mappable=chi_map)
     cb.set_label(r"$\Delta_\mathrm{obs-model}$ ($N_*$)")
-
-    for fit_key in fit_labels.keys()[:-1]:
-        for plane_key in fit_labels.keys():
-            ax = axes[fit_key][plane_key]
-            for tl in ax.get_xmajorticklabels():
-                tl.set_visible(False)
-            ax.set_xlabel('')
-
-    for fit_key in fit_labels.keys():
-        for plane_key in fit_labels.keys()[1:]:
-            ax = axes[fit_key][plane_key]
-            for tl in ax.get_ymajorticklabels():
-                tl.set_visible(False)
-            ax.set_ylabel('')
-
-    for fit_key in fit_labels.keys():
-        plane_key = fit_labels.keys()[0]
-        ax = axes[fit_key][plane_key]
-        ax.text(0.00, 1.03, fit_labels[fit_key],
-                ha='left', va='baseline',
-                transform=ax.transAxes,
-                size=10)
 
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
