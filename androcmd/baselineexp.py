@@ -84,8 +84,8 @@ def init_grid_plot(plot_path, p, dataset):
     canvas = FigureCanvas(fig)
     # TODO add a colorbar axis
     gs = gridspec.GridSpec(nfits, nplanes + 1,
-                           left=0.08, right=0.91, bottom=0.05, top=0.97,
-                           wspace=0.15, hspace=0.2,
+                           left=0.04, right=0.92, bottom=0.05, top=0.97,
+                           wspace=0.3, hspace=0.25,
                            width_ratios=[1.] * nplanes + [0.1],
                            height_ratios=None)
 
@@ -96,6 +96,7 @@ def init_grid_plot(plot_path, p, dataset):
                     for j, k in enumerate(fit_labels)}
         axes[fit_key] = fit_axes
 
+    # x-labels only for the bottom row
     for fit_key in fit_labels.keys()[:-1]:
         for plane_key in fit_labels.keys():
             ax = axes[fit_key][plane_key]
@@ -103,21 +104,26 @@ def init_grid_plot(plot_path, p, dataset):
                 tl.set_visible(False)
             ax.set_xlabel('')
 
+    # Make smaller tick labels
     for fit_key in fit_labels.keys():
-        for plane_key in fit_labels.keys()[1:]:
-            ax = axes[fit_key][plane_key]
-            for tl in ax.get_ymajorticklabels():
-                tl.set_visible(False)
-            ax.set_ylabel('')
+        for plane_key in fit_labels.keys():
+            ax.tick_params(axis='both', which='major', labelsize=7)
+            ax.tick_params(axis='both', which='minor', labelsize=7)
+            # Move the y-label into the plot
+            ax.yaxis.labelpad = -100
+            ax.xaxis.label.set_size(7)
+            ax.yaxis.label.set_size(7)
 
+    # Label the fit name in each row
     for fit_key in fit_labels.keys():
         plane_key = fit_labels.keys()[0]
         ax = axes[fit_key][plane_key]
-        ax.text(0.00, 1.03, fit_labels[fit_key],
+        ax.text(0.00, 1.05, fit_labels[fit_key],
                 ha='left', va='baseline',
                 transform=ax.transAxes,
                 size=10)
 
+    # Highlight the fitted Hess plane in each row
     for fit_key in fit_labels:
         for plane_key in fit_labels:
             ax = axes[fit_key][plane_key]
@@ -126,7 +132,7 @@ def init_grid_plot(plot_path, p, dataset):
                 highlight_color = '#3498db'
                 for loc in ['bottom', 'top', 'right', 'left']:
                     ax.spines[loc].set_color(highlight_color)
-                    ax.spines[loc].set_linewidth(2.)
+                    ax.spines[loc].set_linewidth(3.5)
 
             ax.yaxis.set_major_locator(mpl.ticker.MultipleLocator(base=1))
             ax.yaxis.set_minor_locator(mpl.ticker.MultipleLocator(base=0.25))
@@ -135,6 +141,27 @@ def init_grid_plot(plot_path, p, dataset):
 
     return fit_labels, useable_fits, \
         fig, canvas, axes, cb_ax
+
+
+def reset_grid_plot_labels(fit_labels, axes):
+    # x-labels only for the bottom row
+    for fit_key in fit_labels.keys()[:-1]:
+        for plane_key in fit_labels.keys():
+            ax = axes[fit_key][plane_key]
+            for tl in ax.get_xmajorticklabels():
+                tl.set_visible(False)
+            ax.set_xlabel('')
+
+    # Make smaller tick labels
+    for fit_key in fit_labels.keys():
+        for plane_key in fit_labels.keys():
+            ax = axes[fit_key][plane_key]
+            ax.tick_params(axis='both', which='major', labelsize=7)
+            ax.tick_params(axis='both', which='minor', labelsize=7)
+            # Move the y-label into the plot
+            ax.yaxis.labelpad = -26
+            ax.xaxis.label.set_size(9)
+            ax.yaxis.label.set_size(9)
 
 
 def plot_fit_hess_grid(plot_path, p, dataset):
@@ -176,6 +203,8 @@ def plot_fit_hess_grid(plot_path, p, dataset):
 
     cb = fig.colorbar(ax=ax, cax=cb_ax, mappable=chi_map)
     cb.set_label(r'$\chi^2$')
+
+    reset_grid_plot_labels(fit_labels, axes)
 
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
@@ -223,6 +252,8 @@ def plot_diff_hess_grid(plot_path, p, dataset):
 
     cb = fig.colorbar(ax=ax, cax=cb_ax, mappable=chi_map)
     cb.set_label(r"$\Delta_\mathrm{obs-model}$ ($N_*$)")
+
+    reset_grid_plot_labels(fit_labels, axes)
 
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
