@@ -8,7 +8,7 @@ Helper code for the baseline experiment.
 import os
 from collections import OrderedDict
 
-# import numpy as np
+import numpy as np
 
 import matplotlib as mpl
 from matplotlib.figure import Figure
@@ -16,8 +16,11 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.gridspec as gridspec
 from palettable.cubehelix import perceptual_rainbow_16
 from palettable.colorbrewer.diverging import RdBu_11
+import palettable
 
 from starfisher.pipeline import PipelineBase
+from starfisher.sfhplot import plot_single_sfh_line
+
 from androcmd.planes import BaselineTestPhatPlanes
 from androcmd.phatpipeline import (SolarZIsocs, SolarLockfile,
                                    LewisBrickDust, PhatCrowding,
@@ -273,3 +276,48 @@ def tabulate_fit_chi(table_path, p, dataset):
 
     # nfits = len(fit_labels)
     # nplanes = len(fit_labels)
+
+
+def sfh_comparison_plot(plot_path, p, dataset):
+    fit_labels = OrderedDict((
+        ('lewis', 'Fitting ACS-MS'),
+        ('acs_rgb', 'Fitting ACS-RGB'),
+        ('acs_all', 'Fitting ACS-ALL'),
+        ('oir_all', 'Fitting OIR-ALL'),
+        ('ir_rgb', 'Fitting NIR-RGB')))
+
+    # only re-initialize fits that are available
+    useable_fits = init_fits(p, fit_labels, dataset)
+
+    fig = Figure(figsize=(7.5, 3.5), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 1,
+                           left=0.08, right=0.95, bottom=0.15, top=0.95,
+                           wspace=None, hspace=None,
+                           width_ratios=None, height_ratios=None)
+    ax = fig.add_subplot(gs[0])
+    colors = dict(zip(fit_labels.keys(),
+                      palettable.tableau.ColorBlind_10.mpl_colors))
+    for fit_key in useable_fits:
+        print "fit_key", fit_key
+        sfh_table = p.fits[fit_key].solution_table()
+        plot_single_sfh_line(
+            ax, sfh_table,
+            z_formatter=mpl.ticker.FormatStrFormatter("%.2f"),
+            age_formatter=mpl.ticker.FormatStrFormatter("%4.1f"),
+            color=colors[fit_key],
+            label=fit_labels[fit_key],
+            age_lim=(1e-3, 14.),
+            amp_key='sfr',
+            log_amp=True,
+            log_age=True,
+            x_label=True,
+            y_label=True)
+
+    ax.legend(frameon=True, loc='lower center', fontsize=8)
+
+    for logage in np.log10(np.arange(1, 14, 1) * 1e9):
+        ax.axvline(logage, c='0.9', ls='--', zorder=-1)
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")

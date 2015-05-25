@@ -43,6 +43,11 @@ def main():
         dataset = PhatCatalog(args.brick)
         plot_diff_hess_grid(args.plot_diff, pipeline, dataset)
 
+    if args.plot_sfh is not None:
+        from androcmd.baselineexp import sfh_comparison_plot
+        dataset = PhatCatalog(args.brick)
+        sfh_comparison_plot(args.plot_sfh, pipeline, dataset)
+
     if args.chi_table is not None:
         from androcmd.baselineexp import tabulate_fit_chi
         dataset = PhatCatalog(args.brick)
@@ -63,6 +68,7 @@ def parse_args():
                         default='solarz')
     parser.add_argument('--plot-hess', default=None)
     parser.add_argument('--plot-diff', default=None)
+    parser.add_argument('--plot-sfh', default=None)
     parser.add_argument('--chi-table', default=None)
     return parser.parse_args()
 
