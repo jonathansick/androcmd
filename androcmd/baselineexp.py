@@ -5,6 +5,7 @@ Helper code for the baseline experiment.
 2015-05-15 - Created by Jonathan Sick
 """
 
+import os
 from collections import OrderedDict
 
 # import numpy as np
@@ -39,6 +40,27 @@ class ThreeZPipeline(BaselineTestPhatPlanes, ExtendedSolarIsocs,
         super(ThreeZPipeline, self).__init__(**kwargs)
 
 
+def init_fits(p, fit_labels, dataset):
+    base_dir = os.path.join(os.getenv('STARFISH'), p.root_dir)
+    useable_fits = []
+    for label in fit_labels:
+        fit_dir = os.path.join(base_dir, label)
+        print "fit_dir", fit_dir
+        if os.path.exists(fit_dir):
+            useable_fits.append(label)
+            if label == 'lewis':
+                p.fit('lewis', ['lewis'], dataset)
+            elif label == 'acs_rgb':
+                p.fit('acs_rgb', ['acs_rgb'], dataset)
+            elif label == 'acs_all':
+                p.fit('acs_all', ['acs_all'], dataset)
+            elif label == 'oir_all':
+                p.fit('oir_all', ['oir_all'], dataset)
+            elif label == 'ir_rgb':
+                p.fit('ir_rgb', ['ir_rgb'], dataset)
+    return useable_fits
+
+
 def plot_fit_hess_grid(plot_path, p, dataset):
     fit_labels = OrderedDict((
         ('lewis', 'Fitting ACS-MS'),
@@ -55,13 +77,8 @@ def plot_fit_hess_grid(plot_path, p, dataset):
                  'oir_all': mpl.ticker.MultipleLocator(base=2.),
                  'ir_rgb': mpl.ticker.MultipleLocator(base=0.3)}
 
-    # p.fit('lewis', ['lewis'], dataset)
-    p.fit('acs_rgb', ['acs_rgb'], dataset)
-    p.fit('acs_all', ['acs_all'], dataset)
-    p.fit('oir_all', ['oir_all'], dataset)
-    p.fit('ir_rgb', ['ir_rgb'], dataset)
-
-    usable_fits = ['acs_rgb', 'acs_all', 'ir_rgb', 'oir_all']
+    # only re-initialize fits that are available
+    useable_fits = init_fits(p, fit_labels, dataset)
 
     fig = Figure(figsize=(7.5, 8.5), frameon=False)
     canvas = FigureCanvas(fig)
@@ -82,7 +99,7 @@ def plot_fit_hess_grid(plot_path, p, dataset):
     cube_map = perceptual_rainbow_16.mpl_colormap
     imshow_args = dict(vmax=20, cmap=cube_map)
 
-    for fit_key in usable_fits:
+    for fit_key in useable_fits:
         for plane_key in fit_labels:
             chi_hess = p.make_chisq_hess(dataset, fit_key, plane_key)
             chi_data = chi_hess.masked_hess
@@ -171,13 +188,8 @@ def plot_diff_hess_grid(plot_path, p, dataset):
                  'oir_all': mpl.ticker.MultipleLocator(base=2.),
                  'ir_rgb': mpl.ticker.MultipleLocator(base=0.3)}
 
-    # p.fit('lewis', ['lewis'], dataset)
-    p.fit('acs_rgb', ['acs_rgb'], dataset)
-    p.fit('acs_all', ['acs_all'], dataset)
-    p.fit('oir_all', ['oir_all'], dataset)
-    p.fit('ir_rgb', ['ir_rgb'], dataset)
-
-    usable_fits = ['acs_rgb', 'acs_all', 'ir_rgb', 'oir_all']
+    # only re-initialize fits that are available
+    useable_fits = init_fits(p, fit_labels, dataset)
 
     fig = Figure(figsize=(7.5, 8.5), frameon=False)
     canvas = FigureCanvas(fig)
@@ -198,7 +210,7 @@ def plot_diff_hess_grid(plot_path, p, dataset):
     div_map = RdBu_11.mpl_colormap
     imshow_args = dict(vmin=-50, vmax=50, cmap=div_map)
 
-    for fit_key in usable_fits:
+    for fit_key in useable_fits:
         for plane_key in fit_labels:
             chi_hess = p.make_chisq_hess(dataset, fit_key, plane_key)
             chi_red = p.compute_fit_chi(dataset, fit_key, plane_key,
@@ -277,19 +289,16 @@ def plot_diff_hess_grid(plot_path, p, dataset):
 
 def tabulate_fit_chi(table_path, p, dataset):
     pass
+
     # fit_labels = OrderedDict((
     #     ('lewis', 'Fitting ACS-MS'),
     #     ('acs_rgb', 'Fitting ACS-RGB'),
     #     ('acs_all', 'Fitting ACS-ALL'),
     #     ('oir_all', 'Fitting OIR-ALL'),
     #     ('ir_rgb', 'Fitting NIR-RGB')))
+
+    # only re-initialize fits that are available
+    # useable_fits = init_fits(p, fit_labels)
+
     # nfits = len(fit_labels)
     # nplanes = len(fit_labels)
-
-    # # p.fit('lewis', ['lewis'], dataset)
-    # p.fit('acs_rgb', ['acs_rgb'], dataset)
-    # p.fit('acs_all', ['acs_all'], dataset)
-    # # p.fit('oir_all', ['oir_all'], dataset)
-    # p.fit('ir_rgb', ['ir_rgb'], dataset)
-
-    # usable_fits = ['acs_rgb', 'acs_all', 'ir_rgb', 'oir_all']
