@@ -306,7 +306,7 @@ def sfh_comparison_plot(plot_path, p, dataset):
                       palettable.tableau.ColorBlind_10.mpl_colors))
     for fit_key in useable_fits:
         print "fit_key", fit_key
-        sfh_table = p.fits[fit_key].solution_table()
+        sfh_table = p.fits[fit_key].solution_table(marginalize_z=True)
         plot_single_sfh_line(
             ax, sfh_table,
             z_formatter=mpl.ticker.FormatStrFormatter("%.2f"),
