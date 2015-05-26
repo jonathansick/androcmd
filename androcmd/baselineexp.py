@@ -318,9 +318,10 @@ def sfh_comparison_plot(plot_path, p, dataset):
             log_amp=True,
             log_age=True,
             x_label=True,
-            y_label=True)
+            y_label=True,
+            plot_errors=True)
 
-    ax.legend(frameon=True, loc='lower center', fontsize=8)
+    ax.legend(frameon=True, loc='lower left', fontsize=8)
 
     for logage in np.log10(np.arange(1, 14, 1) * 1e9):
         ax.axvline(logage, c='0.9', ls='--', zorder=-1)
