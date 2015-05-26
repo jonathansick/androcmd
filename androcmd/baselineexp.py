@@ -99,6 +99,12 @@ def init_grid_plot(plot_path, p, dataset):
                     for j, k in enumerate(fit_labels)}
         axes[fit_key] = fit_axes
 
+    # Ensure even blank axes have consistent extents+labels
+    for fit_key in fit_labels:
+        for plane_key in fit_labels:
+            ax = axes[fit_key][plane_key]
+            p.init_plane_axes(ax, plane_key)
+
     # x-labels only for the bottom row
     for fit_key in fit_labels.keys()[:-1]:
         for plane_key in fit_labels.keys():
