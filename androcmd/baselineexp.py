@@ -304,6 +304,8 @@ def sfh_comparison_plot(plot_path, p, dataset):
     ax = fig.add_subplot(gs[0])
     colors = dict(zip(fit_labels.keys(),
                       palettable.tableau.ColorBlind_10.mpl_colors))
+    hatches = dict(zip(fit_labels.keys(),
+                       ['//', '\\\\', '||', '--', 'oo']))
     for fit_key in useable_fits:
         print "fit_key", fit_key
         sfh_table = p.fits[fit_key].solution_table(marginalize_z=True)
@@ -319,7 +321,8 @@ def sfh_comparison_plot(plot_path, p, dataset):
             log_age=True,
             x_label=True,
             y_label=True,
-            plot_errors=True)
+            plot_errors=True,
+            hatch_errors=hatches[fit_key])
 
     ax.legend(frameon=True, loc='lower left', fontsize=8)
 
