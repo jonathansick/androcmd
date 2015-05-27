@@ -303,7 +303,7 @@ def sfh_comparison_plot(plot_path, p, dataset):
                            width_ratios=None, height_ratios=None)
     ax = fig.add_subplot(gs[0])
     colors = dict(zip(fit_labels.keys(),
-                      palettable.tableau.ColorBlind_10.mpl_colors))
+                      palettable.colorbrewer.qualitative.Set1_5.mpl_colors))
     # hatches = dict(zip(fit_labels.keys(),
     #                    ['//', '\\\\', '||', '--', 'oo']))
     for fit_key in useable_fits:
