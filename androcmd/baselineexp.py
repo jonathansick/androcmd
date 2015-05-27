@@ -309,15 +309,15 @@ def sfh_comparison_plot(plot_path, p, dataset):
     for fit_key in useable_fits:
         print "fit_key", fit_key
         sfh_table = p.fits[fit_key].solution_table(marginalize_z=True)
-        mean_log_age = p.fits[fit_key].mean_log_age
-        print fit_key, mean_log_age
+        mean_age = p.fits[fit_key].mean_age
+        # mean_log_age = p.fits[fit_key].mean_log_age
         plot_single_sfh_line(
             ax, sfh_table,
             z_formatter=mpl.ticker.FormatStrFormatter("%.2f"),
             age_formatter=mpl.ticker.FormatStrFormatter("%4.1f"),
             color=colors[fit_key],
             label=r'{0} $\langle A \rangle={1:.1f}$ Gyr'.format(
-                fit_labels[fit_key], 10. ** (mean_log_age / 1e9)),
+                fit_labels[fit_key], mean_age),
             age_lim=(1e-3, 14.),
             amp_key='sfr',
             log_amp=True,
@@ -327,10 +327,14 @@ def sfh_comparison_plot(plot_path, p, dataset):
             plot_errors=True,
             hatch_errors=hatches[fit_key])
 
-    ax.legend(frameon=True, loc='lower left', fontsize=8)
+    ax.legend(frameon=True, loc='lower left', fontsize=8,
+              fancybox=True, framealpha=0.5)
 
     for logage in np.log10(np.arange(1, 14, 1) * 1e9):
-        ax.axvline(logage, c='0.9', ls='--', zorder=-1)
+        ax.axvline(logage, c='r', ls='-', lw=0.7, zorder=-20)
+
+    ax.set_ylim(-9, 6.)
+    ax.set_xlim(6.5, 10.2)
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
