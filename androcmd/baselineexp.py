@@ -309,15 +309,15 @@ def sfh_comparison_plot(plot_path, p, dataset):
     for fit_key in useable_fits:
         print "fit_key", fit_key
         sfh_table = p.fits[fit_key].solution_table(marginalize_z=True)
-        mean_age = p.fits[fit_key].mean_age
+        mean_age, mean_age_sigma = p.fits[fit_key].mean_age
         # mean_log_age = p.fits[fit_key].mean_log_age
         plot_single_sfh_line(
             ax, sfh_table,
             z_formatter=mpl.ticker.FormatStrFormatter("%.2f"),
             age_formatter=mpl.ticker.FormatStrFormatter("%4.1f"),
             color=colors[fit_key],
-            label=r'{0} $\langle A \rangle={1:.1f}$ Gyr'.format(
-                fit_labels[fit_key], mean_age),
+            label=r'{0} $\langle A \rangle={1:.1f}\pm{2:.1f}$ Gyr'.format(
+                fit_labels[fit_key], mean_age, mean_age_sigma),
             age_lim=(1e-3, 14.),
             amp_key='sfr',
             log_amp=True,
