@@ -48,6 +48,14 @@ def main():
         dataset = PhatCatalog(args.brick)
         sfh_comparison_plot(args.plot_sfh, pipeline, dataset)
 
+    if args.plot_zsfh is not None:
+        from androcmd.baselineexp import plot_sfh_metallicity_trends
+        dataset = PhatCatalog(args.brick)
+        for fit_key in args.plot_zsfh:
+            plot_path = "{model}_b{brick:d}_zsfh_{key}".format(
+                model=args.model_name, brick=args.brick, key=fit_key)
+            plot_sfh_metallicity_trends(plot_path, pipeline, dataset, fit_key)
+
     if args.chi_table is not None:
         from androcmd.baselineexp import tabulate_fit_chi
         dataset = PhatCatalog(args.brick)
@@ -70,6 +78,9 @@ def parse_args():
     parser.add_argument('--plot-diff', default=None)
     parser.add_argument('--plot-sfh', default=None)
     parser.add_argument('--chi-table', default=None)
+    parser.add_argument('--plot-zsfh', nargs='*', default=None,
+                        choices=['lewis', 'acs_rgb', 'acs_all',
+                                 'oir_all', 'ir_rgb'])
     return parser.parse_args()
 
 

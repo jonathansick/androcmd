@@ -338,3 +338,61 @@ def sfh_comparison_plot(plot_path, p, dataset):
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_sfh_metallicity_trends(plot_path, p, dataset, fit_key):
+    fit_labels = OrderedDict((
+        ('lewis', 'Fitting ACS-MS'),
+        ('acs_rgb', 'Fitting ACS-RGB'),
+        ('acs_all', 'Fitting ACS-ALL'),
+        ('oir_all', 'Fitting OIR-ALL'),
+        ('ir_rgb', 'Fitting NIR-RGB')))
+
+    # only re-initialize fits that are available
+    init_fits(p, fit_labels, dataset)
+
+    fig = Figure(figsize=(3.5, 3.5), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 1,
+                           left=0.15, right=0.95, bottom=0.15, top=0.95,
+                           wspace=None, hspace=None,
+                           width_ratios=None, height_ratios=None)
+    ax = fig.add_subplot(gs[0])
+
+    colors = palettable.tableau.ColorBlind_10.mpl_colors
+
+    # TODO implement these
+    sfh_tables = p.fits[fit_key].solution_table(split_z=True)
+    mean_ages, mean_age_sigmas = p.fits[fit_key].mean_age_by_z
+    legend_str = r'$\log Z/Z_\odot = {0}$, ' \
+        r'$\langle A \rangle={1:.1f}\pm{2:.1f}$ Gyr'
+    for (z_key, color) in zip(sfh_tables.keys(), colors):
+        sfh_table = sfh_tables[z_key]
+        mean_age = mean_ages[z_key]
+        mean_age_sigma = mean_age_sigmas[z_key]
+        plot_single_sfh_line(
+            ax, sfh_table,
+            z_formatter=mpl.ticker.FormatStrFormatter("%.2f"),
+            age_formatter=mpl.ticker.FormatStrFormatter("%4.1f"),
+            color=color,
+            label=legend_str.format(z_key, mean_age, mean_age_sigma),
+            age_lim=(1e-3, 14.),
+            amp_key='sfr',
+            log_amp=True,
+            log_age=True,
+            x_label=True,
+            y_label=True,
+            plot_errors=True,
+            hatch_errors=None)
+
+    ax.legend(frameon=True, loc='best', fontsize=8,
+              fancybox=True, framealpha=0.8)
+
+    for logage in np.log10(np.arange(1, 14, 1) * 1e9):
+        ax.axvline(logage, c='r', ls='-', lw=0.7, zorder=-20)
+
+    ax.set_ylim(-9, 5.)
+    ax.set_xlim(6.5, 10.2)
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
