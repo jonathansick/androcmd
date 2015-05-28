@@ -45,9 +45,9 @@ def main():
     Pipeline = ThreeZPipeline
     isoc = dict(isoc_kind='parsec_CAF09_v1.2S',
                 photsys_version='yang')
-    pipeline = Pipeline(brick=patch['brick'],  # FIXME is this necessary?
-                        root_dir=model_name,
-                        isoc_args=isoc)
+    pipeline = Pipeline(root_dir=model_name,
+                        isoc_args=isoc,
+                        **patch)
     dataset = PatchCatalog(**patch)
 
     for fit in args.fit:
