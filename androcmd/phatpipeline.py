@@ -325,7 +325,8 @@ class PhatCrowding(CrowdingBase):
         crowd_path = os.path.join(self.synth_dir, "crowding.dat")
         full_crowd_path = os.path.join(STARFISH, crowd_path)
         tbl = PhatAstTable()
-        tbl.write_crowdfile_for_field(full_crowd_path, 0,
+        tbl.write_crowdfile_for_field(full_crowd_path,
+                                      self._ast_field,
                                       bands=self.bands)
         self.crowd = ExtantCrowdingTable(crowd_path)
 

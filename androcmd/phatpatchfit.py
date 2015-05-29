@@ -14,12 +14,18 @@ import numpy as np
 from astropy.table import Table
 
 from m31hst import phat_v2_phot_path
+from m31hst.phatast import PhatAstTable
+
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 
 from starfisher.pipeline import PipelineBase
 from starfisher.pipeline import PlaneBase
 from starfisher.pipeline import ExtinctionBase
 from starfisher.pipeline import DatasetBase
+from starfisher.pipeline import CrowdingBase
 from starfisher.dust import ExtinctionDistribution
+from starfisher import ExtantCrowdingTable
 
 # from starfisher.pipeline import (
 #     PipelineBase, IsochroneSetBase, DatasetBase, LockBase,
@@ -27,8 +33,7 @@ from starfisher.dust import ExtinctionDistribution
 
 from androcmd.planes import make_f475w_f160w
 
-from androcmd.phatpipeline import (PhatCrowding,
-                                   ExtendedSolarIsocs, ExtendedSolarLockfile)
+from androcmd.phatpipeline import ExtendedSolarIsocs, ExtendedSolarLockfile
 from androcmd.dust import mw_Av, phat_rel_extinction, LewisDustLaw
 
 
@@ -72,8 +77,64 @@ class LewisPatchDust(ExtinctionBase):
         self.rel_extinction = phat_rel_extinction()
 
 
+class AutoPhatCrowding(CrowdingBase):
+    """Use crowding from the PHAT AST fields, automatically selecting
+    the AST field that best matches the location of the patch being
+    considered.
+    """
+    def __init__(self, **kwargs):
+        super(AutoPhatCrowding, self).__init__(**kwargs)
+
+    def build_crowding(self):
+        crowd_path = os.path.join(self.synth_dir, "crowding.dat")
+        full_crowd_path = os.path.join(os.getenv('STARFISH'), crowd_path)
+
+        patch_coord = SkyCoord(ra=self.ra0 * u.degree,
+                               dec=self.dec0 * u.degree)
+
+        tbl = PhatAstTable()
+        centers = np.array([f['center'] for f in tbl.fields])
+
+        ast_coords = SkyCoord(ra=centers[:, 0] * u.degree,
+                              dec=centers[:, 1] * u.degree,
+                              frame='icrs')
+        dists = ast_coords.separation(patch_coord)
+        best_ast_field = np.argmin(dists)
+        # FIXME actually want to compute different in galactocentric radii?
+
+        tbl.write_crowdfile_for_field(full_crowd_path,
+                                      best_ast_field,
+                                      bands=self.bands)
+        self.crowd = ExtantCrowdingTable(crowd_path)
+
+    def mask_planes(self):
+        """Mask each CMD plane based on the incomplete or empty regions of
+        the PHAT artificial star testing projected into the Hess plane.
+
+        This hook is called automatically by the base pipeline before
+        synth is run.
+        """
+        # FIXME note that AST field 0 *is always* used
+        print "Using PhatCrowding.mask_planes"
+        ast = PhatAstTable()
+        for key, plane in self.planes.iteritems():
+            band = plane.y_mag  # FIXME assumes CMD; only 1 y axis mag.
+            hess, x_grid, y_grid = ast.completeness_hess(
+                0, band,
+                plane.x_mag, plane.y_mag,
+                plane.xlim, plane.ylim, 0.5)
+            yidx, xidx = np.where(hess < 0.5)  # mask less than 50% complete
+            for yi, xi in zip(yidx, xidx):
+                plane.mask_region((x_grid[xi], x_grid[xi + 1]),
+                                  (y_grid[yi], y_grid[yi + 1]))
+            yidx, xidx = np.where(~np.isfinite(hess))  # mask empty AST
+            for yi, xi in zip(yidx, xidx):
+                plane.mask_region((x_grid[xi], x_grid[xi + 1]),
+                                  (y_grid[yi], y_grid[yi + 1]))
+
+
 class ThreeZPipeline(BaselineTestPhatPlanes, ExtendedSolarIsocs,
-                     ExtendedSolarLockfile, LewisPatchDust, PhatCrowding,
+                     ExtendedSolarLockfile, LewisPatchDust, AutoPhatCrowding,
                      PipelineBase):
     """Pipeline for patch fitting with three metallicity tracks."""
     def __init__(self, **kwargs):
