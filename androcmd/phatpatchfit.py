@@ -37,13 +37,13 @@ from androcmd.phatpipeline import ExtendedSolarIsocs, ExtendedSolarLockfile
 from androcmd.dust import mw_Av, phat_rel_extinction, LewisDustLaw
 
 
-class BaselineTestPhatPlanes(PlaneBase):
+class PatchFitPlanes(PlaneBase):
     """Color plane set for the PHAT color baseline comparison test."""
     def __init__(self, **kwargs):
         self._planes = OrderedDict([
             ('oir_all', make_f475w_f160w()),
         ])
-        super(BaselineTestPhatPlanes, self).__init__(**kwargs)
+        super(PatchFitPlanes, self).__init__(**kwargs)
 
     @property
     def planes(self):
@@ -133,7 +133,7 @@ class AutoPhatCrowding(CrowdingBase):
                                   (y_grid[yi], y_grid[yi + 1]))
 
 
-class ThreeZPipeline(BaselineTestPhatPlanes, ExtendedSolarIsocs,
+class ThreeZPipeline(PatchFitPlanes, ExtendedSolarIsocs,
                      ExtendedSolarLockfile, LewisPatchDust, AutoPhatCrowding,
                      PipelineBase):
     """Pipeline for patch fitting with three metallicity tracks."""
