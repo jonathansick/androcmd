@@ -12,8 +12,10 @@ from matplotlib.patches import Polygon
 
 import numpy as np
 from astropy.table import Table
+from astropy.io import fits
+import astropy
 
-from m31hst import phat_v2_phot_path
+from m31hst import phat_v2_phot_path, phat_brick_path
 from m31hst.phatast import PhatAstTable
 
 from astropy import units as u
@@ -241,3 +243,28 @@ class PatchCatalog(DatasetBase):
     def polygon(self):
         """Polygon bounding box around the dataset."""
         return self.poly
+
+
+def build_patches(brick, proj_size=100):
+    """Build patches from a brick.
+
+    brick : int
+        PHAT brick number.
+    proj_size : float
+        Size of a patch, in projected side length, in parsecs.
+    """
+    patches = {}
+
+    # Get the patch FITS file
+    path = phat_brick_path(brick, 'F814W')
+    with fits.open(path) as f:
+        header = fits.getheader(f, 0)
+        wcs = astropy.wcs.WCS(header)
+
+    # degree per pixel
+    print astropy.wcs.utils.proj_plane_pixel_scales(wcs)
+    pixel_scale = np.sqrt(
+        astropy.wcs.utils.proj_plane_pixel_scales(wcs) ** 2.).mean()
+    print "mean pixel scale", pixel_scale
+
+    return patches
