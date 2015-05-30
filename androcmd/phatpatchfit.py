@@ -253,7 +253,7 @@ def build_patches(brick, proj_size=100):
     proj_size : float
         Size of a patch, in projected side length, in parsecs.
     """
-    patches = {}
+    patches = []
 
     # Get the patch FITS file
     path = phat_brick_path(brick, 'F814W')
@@ -262,9 +262,46 @@ def build_patches(brick, proj_size=100):
         wcs = astropy.wcs.WCS(header)
 
     # degree per pixel
-    print astropy.wcs.utils.proj_plane_pixel_scales(wcs)
-    pixel_scale = np.sqrt(
-        astropy.wcs.utils.proj_plane_pixel_scales(wcs) ** 2.).mean()
-    print "mean pixel scale", pixel_scale
+    pixel_scale = np.mean(
+        np.sqrt(astropy.wcs.utils.proj_plane_pixel_scales(wcs) ** 2.))
+
+    theta = np.rad2deg(np.arctan(proj_size / (785. * 10. ** 3.)))
+
+    n_pix_side_min = theta / pixel_scale
+
+    # Number of boxes, in each dimension so each box is *at least*
+    # proj_size on each size.
+    nx = np.floor(header['NAXIS1'] / n_pix_side_min)
+    ny = np.floor(header['NAXIS2'] / n_pix_side_min)
+
+    x_edges = np.linspace(0, header['NAXIS1'], num=nx + 1,
+                          endpoint=True, dtype=int)
+    y_edges = np.linspace(0, header['NAXIS2'], num=ny + 1,
+                          endpoint=True, dtype=int)
+
+    for i in xrange(nx):
+        for j in xrange(ny):
+            x1 = x_edges[i]
+            x2 = x_edges[i + 1]
+            y1 = y_edges[i]
+            y2 = y_edges[i + 1]
+            xy_verts = np.array([[x1, y1],
+                                 [x1, y2],
+                                 [x2, y2],
+                                 [x2, y1]])
+            radec = wcs.all_pix2world(xy_verts, 0)
+            # projected arcsec^2
+            area_proj = (y2 - y1) * (x2 - x1) * (pixel_scale * 3600.) ** 2.
+            # area in pc^2, de-projected
+            pc_per_arcsec = 785. * 10. ** 3. * np.tan(np.deg2rad(1. / 3600))
+            area = area_proj * (pc_per_arcsec) ** 2. / np.cos(77 * np.pi / 180.)  # NOQA
+            patch = {'patch': -1,
+                     'brick': brick,
+                     'poly': radec.tolist(),
+                     'ra0': radec[:, 0].mean(),
+                     'dec0': radec[:, 1].mean(),
+                     'area_proj': area_proj,
+                     'area': area}
+            patches.append(patch)
 
     return patches

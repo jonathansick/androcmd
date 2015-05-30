@@ -10,7 +10,8 @@ Relies on having a JSON file specifying each field. Spec is:
      brick: <int> phat brick number that photometry belongs to,
      ra0: central RA of the patch,
      dec0: central DEC of the patch,
-     area: deprojected area of patch in pc^2,  # does Lewis do deproj areas?
+     area: deprojected area of patch in pc^2
+     area_proj: projected area of patch in arcsec^2
     }
 
 2015-05-28 - Created by Jonathan Sick
