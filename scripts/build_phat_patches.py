@@ -9,7 +9,7 @@ Build a JSON file specifying all patches in a PHAT footprint.
 import argparse
 import json
 
-from androcmd import build_patches
+from androcmd.phatpatchfit import build_patches
 
 
 def main():
