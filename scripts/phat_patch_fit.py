@@ -5,7 +5,7 @@ Fit all of M31, divided into patches.
 
 Relies on having a JSON file specifying each field. Spec is:
 
-    {patch: <int> patch number,
+    {patch: <str> patch identifier,
      poly: <list of (ra,dec) tuples> footprint,
      brick: <int> phat brick number that photometry belongs to,
      ra0: central RA of the patch,
@@ -32,8 +32,8 @@ def main():
     with open(args.patch_file_path) as f:
         patches = json.load(f)
 
-    model_name = "{0:06d}".format(args.patch_number)
-    patch = patches[args.patch_number]
+    model_name = args.patch_id
+    patch = patches[args.patch_id]
 
     # if args.pipeline == 'solarz':
     #     # Use the single-Z solar pipeline
@@ -62,7 +62,7 @@ def parse_args(arg1):
     parser = argparse.ArgumentParser(
         description="Model a brick with differential old/young dust.")
     parser.add_argument('patch_file_path')
-    parser.add_argument('patch_number', type=int)
+    parser.add_argument('patch_id')
     parser.add_argument('--fit',
                         choices=['lewis', 'acs_rgb', 'acs_all',
                                  'oir_all', 'ir_rgb'],

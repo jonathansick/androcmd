@@ -279,6 +279,7 @@ def build_patches(brick, proj_size=100):
     y_edges = np.linspace(0, header['NAXIS2'], num=ny + 1,
                           endpoint=True, dtype=int)
 
+    patch_num = 1
     for i in xrange(nx):
         for j in xrange(ny):
             x1 = x_edges[i]
@@ -295,7 +296,7 @@ def build_patches(brick, proj_size=100):
             # area in pc^2, de-projected
             pc_per_arcsec = 785. * 10. ** 3. * np.tan(np.deg2rad(1. / 3600))
             area = area_proj * (pc_per_arcsec) ** 2. / np.cos(77 * np.pi / 180.)  # NOQA
-            patch = {'patch': -1,
+            patch = {'patch': '{0:02d}_{1:03d}'.format(brick, patch_num),
                      'brick': brick,
                      'poly': radec.tolist(),
                      'ra0': radec[:, 0].mean(),
@@ -303,5 +304,6 @@ def build_patches(brick, proj_size=100):
                      'area_proj': area_proj,
                      'area': area}
             patches.append(patch)
+            patch_num += 1
 
     return patches
