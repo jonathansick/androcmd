@@ -11,6 +11,8 @@ import argparse
 import json
 import subprocess
 
+from androcmd.phatpatchfit import PatchCatalog, ThreeZPipeline
+
 
 def main():
     args = parse_args()
@@ -82,12 +84,24 @@ def get_patch_info(json, brick, patch_num):
             return d
 
 
-def fit_patch(path_info):
+def fit_patch(patch_info):
     """Fit a patch."""
-    pass
+    isoc = dict(isoc_kind='parsec_CAF09_v1.2S',
+                photsys_version='yang')
+    kwargs = {}
+    kwargs.update(patch_info)
+    kwargs['isoc_args'] = isoc
+    kwargs['root_dir'] = patch_info['patch']
+    pipeline = ThreeZPipeline(**kwargs)
+    dataset = PatchCatalog(**patch_info)
+    pipeline.fit(['oir_all'], ['oir_all'], dataset)
+    pipeline.fit(['lewis'], ['lewis'], dataset)
+
+    # TODO Reduce fits into HDF5 file object
 
 
 def upload_result(result_hdf5_path, vos_dir):
+    """Upload fit dataset to HDF5."""
     pass
 
 

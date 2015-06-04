@@ -33,7 +33,7 @@ from starfisher import ExtantCrowdingTable
 #     PipelineBase, IsochroneSetBase, DatasetBase, LockBase,
 #     CrowdingBase, ExtinctionBase)
 
-from androcmd.planes import make_f475w_f160w
+from androcmd.planes import make_f475w_f160w, make_lewis_ms
 
 from androcmd.phatpipeline import ExtendedSolarIsocs, ExtendedSolarLockfile
 from androcmd.dust import mw_Av, phat_rel_extinction, LewisDustLaw
@@ -44,6 +44,7 @@ class PatchFitPlanes(PlaneBase):
     def __init__(self, **kwargs):
         self._planes = OrderedDict([
             ('oir_all', make_f475w_f160w()),
+            ('lewis', make_lewis_ms()),
         ])
         super(PatchFitPlanes, self).__init__(**kwargs)
 
