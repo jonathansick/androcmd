@@ -102,7 +102,10 @@ def fit_patch(patch_info):
 
 def upload_result(result_hdf5_path, vos_dir):
     """Upload fit dataset to HDF5."""
-    pass
+    cmd = 'vcp {0} vos:jonathansick/phat/patches/{1}'.format(
+        result_hdf5_path, os.path.basename(result_hdf5_path))
+    print cmd
+    subprocess.call(cmd, shell=True)
 
 
 if __name__ == '__main__':
