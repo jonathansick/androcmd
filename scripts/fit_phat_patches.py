@@ -103,6 +103,8 @@ def fit_patch(patch_info):
     h5path = os.path.join(os.getenv('STARFISH'), patch_info['patch'],
                           patch_info['patch'] + '.hdf5')
     hdf5 = h5py.File(h5path, mode='w')
+    for k, v in patch_info:
+        hdf5.attrs[k] = v
 
     # Get the SFH table, making an HDF5 group
     reduce_sfh_tables(hdf5, pipeline, ('oir_all', 'lewis'))
