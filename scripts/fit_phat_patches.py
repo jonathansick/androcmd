@@ -11,6 +11,8 @@ import argparse
 import json
 import subprocess
 
+import h5py
+
 from androcmd.phatpatchfit import PatchCatalog, ThreeZPipeline
 
 
@@ -97,10 +99,30 @@ def fit_patch(patch_info):
     pipeline.fit(['oir_all'], ['oir_all'], dataset)
     pipeline.fit(['lewis'], ['lewis'], dataset)
 
-    # TODO Reduce fits into HDF5 file object
+    # Output datafile
+    h5path = os.path.join(os.getenv('STARFISH'), patch_info['patch'],
+                          patch_info['patch'] + '.hdf5')
+    hdf5 = h5py.File(h5path, mode='w')
+
+    # Get the SFH table, making an HDF5 group
+    reduce_sfh_tables(hdf5, pipeline, ('oir_all', 'lewis'))
+
+    # Save and upload hdf5 file
+    hdf5.flush()
+
+    upload_result(h5path)
 
 
-def upload_result(result_hdf5_path, vos_dir):
+def reduce_sfh_tables(hdf5, pipeline, fit_keys):
+    grp = hdf5.create_group('sfh')
+    for fit_key in fit_keys:
+        t = pipeline.fits[fit_key].solution_table(split_z=False)
+        dset = grp.create_dataset(fit_key, data=t)
+        dset.attrs['mean_age'] = pipeline.fits[fit_key].mean_age
+    return grp
+
+
+def upload_result(result_hdf5_path):
     """Upload fit dataset to HDF5."""
     cmd = 'vcp {0} vos:jonathansick/phat/patches/{1}'.format(
         result_hdf5_path, os.path.basename(result_hdf5_path))
