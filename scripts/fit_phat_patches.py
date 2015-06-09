@@ -107,6 +107,9 @@ def fit_patch(patch_info):
     # Get the SFH table, making an HDF5 group
     reduce_sfh_tables(hdf5, pipeline, ('oir_all', 'lewis'))
 
+    # Get the Hess plane of the fits
+    reduce_fitted_hess_planes(hdf5, pipeline, dataset, ('oir_all', 'lewis'))
+
     # Save and upload hdf5 file
     hdf5.flush()
 
@@ -120,6 +123,46 @@ def reduce_sfh_tables(hdf5, pipeline, fit_keys):
         dset = grp.create_dataset(fit_key, data=t)
         dset.attrs['mean_age'] = pipeline.fits[fit_key].mean_age
     return grp
+
+
+def reduce_fitted_hess_planes(hdf5, pipeline, dataset, fit_keys):
+    sim_group = hdf5.create_group('sim_hess')
+    obs_group = hdf5.create_group('obs_hess')
+    chi_group = hdf5.create_group('chi_hess')
+    diff_group = hdf5.create_group('diff_hess')
+
+    for fit_key in fit_keys:
+        sim_hess = pipeline.make_sim_hess(fit_key, (fit_key,))
+        d = _make_hess_dataset(sim_group, fit_key, sim_hess)
+
+        obs_hess = pipeline.make_obs_hess(dataset, fit_key)
+        obs_hess = pipeline.make_obs_hess(fit_key, (fit_key,))
+        d = _make_hess_dataset(obs_group, fit_key, obs_hess)
+
+        diff_hess = pipeline.make_fit_diff_hess(fit_key, (fit_key,))
+        d = _make_hess_dataset(diff_group, fit_key, diff_hess)
+
+        chi_hess = pipeline.make_chisq_hess(fit_key, (fit_key,))
+        chi_red = pipeline.compute_fit_chi(dataset, fit_key, fit_key,
+                                           chi_hess=chi_hess)
+        d = _make_hess_dataset(chi_group, fit_key, chi_hess)
+        d.attrs['chi_red'] = chi_red
+
+
+def _make_hess_dataset(group, fit_key, hess):
+    d = group.create_dataset(fit_key, data=hess.masked_hess)
+    d.attrs['origin'] = hess.origin
+    d.attrs['extent'] = hess.extent
+    plane = hess._plane
+    d.attrs['suffix'] = plane.suffix
+    d.attrs['x_mag'] = plane.x_mag
+    d.attrs['y_mag'] = plane.y_mag
+    d.attrs['x_span'] = plane.x_span
+    d.attrs['y_span'] = plane.y_span
+    d.attrs['x_label'] = plane.x_label
+    d.attrs['y_label'] = plane.y_label
+    d.attrs['dpix'] = plane.dpix
+    return d
 
 
 def upload_result(result_hdf5_path):
