@@ -22,10 +22,15 @@ def main():
     # download the star catalog for this brick, if necessary
     download_brick_catalog(args.brick)
 
+    if ',' in args.patches[0]:
+        patches = args.patches[0].split(',')
+    else:
+        patches = args.patches
+
     with open(args.json_patch_path, 'r') as f:
         patch_json = json.load(f)
 
-    for patch_num in args.patches:
+    for patch_num in patches:
         # fit this patch
         patch_info = get_patch_info(patch_json, args.brick, patch_num)
         result_hdf5_path = fit_patch(patch_info)
@@ -39,7 +44,8 @@ def parse_args():
     parser.add_argument('brick', type=int,
                         help='Brick number')
     parser.add_argument('--patches', type=int, nargs='*',
-                        help='Patch number(s) to fit in brick')
+                        help='Patch number(s) to fit in brick '
+                             'can be comma-delimited')
     parser.add_argument('--json', dest='json_patch_path',
                         help='Path to patch JSON file')
     parser.add_argument('--vodir',
