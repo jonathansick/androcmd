@@ -49,7 +49,8 @@ def parse_args():
     parser.add_argument('--json', dest='json_patch_path',
                         help='Path to patch JSON file')
     parser.add_argument('--vodir',
-                        help='VOSpace directory to save results in')
+                        help='VOSpace directory to save results in',
+                        default='vos:jonathansick/phat/patches')
     return parser.parse_args()
 
 
