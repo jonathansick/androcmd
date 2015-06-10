@@ -10,6 +10,7 @@ import os
 import argparse
 import json
 import subprocess
+import re
 
 import h5py
 
@@ -22,10 +23,7 @@ def main():
     # download the star catalog for this brick, if necessary
     download_brick_catalog(args.brick)
 
-    if ',' in args.patches[0]:
-        patches = args.patches[0].split(',')
-    else:
-        patches = args.patches
+    patches = [int(v) for v in re.findall(r"[\w']+", args.patches)]
 
     with open(args.json_patch_path, 'r') as f:
         patch_json = json.load(f)
@@ -43,7 +41,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('brick', type=int,
                         help='Brick number')
-    parser.add_argument('--patches', type=int, nargs='*',
+    parser.add_argument('--patches',
                         help='Patch number(s) to fit in brick '
                              'can be comma-delimited')
     parser.add_argument('--json', dest='json_patch_path',
@@ -113,7 +111,7 @@ def fit_patch(patch_info):
     h5path = os.path.join(os.getenv('STARFISH'), patch_info['patch'],
                           patch_info['patch'] + '.hdf5')
     hdf5 = h5py.File(h5path, mode='w')
-    for k, v in patch_info:
+    for k, v in patch_info.iteritems():
         hdf5.attrs[k] = v
 
     # Get the SFH table, making an HDF5 group
