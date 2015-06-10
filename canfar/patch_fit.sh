@@ -26,7 +26,7 @@ python setup.py develop
 cd $STARFISH
 
 # Get the JSON dataset describing patches
-PATCH_INFO_PATH = "patches.json"
+PATCH_INFO_PATH="patches.json"
 if [ ! -f $PATCH_INFO_PATH ]; then
     vcp vos:jonathansick/$3/${PATCH_INFO_PATH} ${PATCH_INFO_PATH}
 fi
