@@ -256,9 +256,10 @@ def build_patches(brick, proj_size=100):
     patches = []
 
     # Get the patch FITS file
-    path = phat_brick_path(brick, 'F814W')
+    path = phat_brick_path(brick, 'f814w')
     with fits.open(path) as f:
-        header = fits.getheader(f, 0)
+        print f
+        header = f[1].header
         wcs = astropy.wcs.WCS(header)
 
     # degree per pixel
@@ -271,8 +272,8 @@ def build_patches(brick, proj_size=100):
 
     # Number of boxes, in each dimension so each box is *at least*
     # proj_size on each size.
-    nx = np.floor(header['NAXIS1'] / n_pix_side_min)
-    ny = np.floor(header['NAXIS2'] / n_pix_side_min)
+    nx = int(np.floor(header['NAXIS1'] / n_pix_side_min))
+    ny = int(np.floor(header['NAXIS2'] / n_pix_side_min))
 
     x_edges = np.linspace(0, header['NAXIS1'], num=nx + 1,
                           endpoint=True, dtype=int)

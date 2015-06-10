@@ -30,8 +30,9 @@ def parse_args():
     parser.add_argument('--bricks', nargs='*', type=int,
                         default=range(2, 24))
     parser.add_argument('--size', type=float,
-                        help='Projected size of patch in pc on each side')
-    return parser.parse_arguments()
+                        help='Projected size of patch in pc on each side',
+                        default=100.)
+    return parser.parse_args()
 
 
 if __name__ == '__main__':
