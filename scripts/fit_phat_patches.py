@@ -97,8 +97,10 @@ def fit_patch(patch_info):
     kwargs['root_dir'] = patch_info['patch']
     pipeline = ThreeZPipeline(**kwargs)
     dataset = PatchCatalog(**patch_info)
-    pipeline.fit(['oir_all'], ['oir_all'], dataset)
-    pipeline.fit(['lewis'], ['lewis'], dataset)
+
+    fit_keys = ['oir_all']
+    for fit_key in fit_keys:
+        pipeline.fit(fit_key, [fit_key], dataset)
 
     # Output datafile
     h5path = os.path.join(os.getenv('STARFISH'), patch_info['patch'],
@@ -108,10 +110,10 @@ def fit_patch(patch_info):
         hdf5.attrs[k] = v
 
     # Get the SFH table, making an HDF5 group
-    reduce_sfh_tables(hdf5, pipeline, ('oir_all', 'lewis'))
+    reduce_sfh_tables(hdf5, pipeline, fit_keys)
 
     # Get the Hess plane of the fits
-    reduce_fitted_hess_planes(hdf5, pipeline, dataset, ('oir_all', 'lewis'))
+    reduce_fitted_hess_planes(hdf5, pipeline, dataset, fit_keys)
 
     # Save and upload hdf5 file
     hdf5.flush()

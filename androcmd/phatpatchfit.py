@@ -8,7 +8,7 @@ Tools for the pan-M31 PHAT patch fitting exercise.
 import os
 from collections import OrderedDict
 
-from matplotlib.patches import Polygon
+from matplotlib.path import Path
 
 import numpy as np
 from astropy.table import Table
@@ -158,12 +158,15 @@ class PatchCatalog(DatasetBase):
     object.
     """
     def __init__(self, **kwargs):
+        self._phat_data = None
         self.patch = kwargs.pop('patch')
         self.poly = kwargs.pop('poly')
         self.brick = kwargs.pop('brick')
         self.ra0 = kwargs.pop('ra0')
         self.dec0 = kwargs.pop('dec0')
         self.area = kwargs.pop('area')
+        self.area_proj = kwargs.pop('area_proj')
+        print "uncaught PatchCatalog keywords", kwargs
         super(PatchCatalog, self).__init__(**kwargs)
 
     def _load_phat_data(self):
@@ -184,8 +187,8 @@ class PatchCatalog(DatasetBase):
         xy = np.vstack((data_ra, data_dec)).T
         print "xy.shape", xy.shape
 
-        polygon = Polygon(self.poly, closed=True)
-        inside = polygon.contains_point(xy)
+        polygon = Path(self.poly, closed=False)
+        inside = polygon.contains_points(xy)
         return dataset[inside == True]  # noqa
 
     def get_phot(self, band):
@@ -257,10 +260,9 @@ def build_patches(brick, proj_size=100):
     patches = []
 
     # Get the patch FITS file
-    path = phat_brick_path(brick, 'f814w')
+    path = phat_brick_path(brick, 'F814W')
     with fits.open(path) as f:
-        print f
-        header = f[1].header
+        header = fits.getheader(f, 0)
         wcs = astropy.wcs.WCS(header)
 
     # degree per pixel
@@ -273,8 +275,8 @@ def build_patches(brick, proj_size=100):
 
     # Number of boxes, in each dimension so each box is *at least*
     # proj_size on each size.
-    nx = int(np.floor(header['NAXIS1'] / n_pix_side_min))
-    ny = int(np.floor(header['NAXIS2'] / n_pix_side_min))
+    nx = np.floor(header['NAXIS1'] / n_pix_side_min)
+    ny = np.floor(header['NAXIS2'] / n_pix_side_min)
 
     x_edges = np.linspace(0, header['NAXIS1'], num=nx + 1,
                           endpoint=True, dtype=int)
