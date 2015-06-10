@@ -34,7 +34,7 @@ def main():
         result_hdf5_path = fit_patch(patch_info)
 
         if args.vodir is not None:
-            upload_result(result_hdf5_path, args.vodir)  # FIXME implement
+            upload_result(result_hdf5_path, args.vodir)
 
 
 def parse_args():
@@ -103,7 +103,7 @@ def fit_patch(patch_info):
     pipeline = ThreeZPipeline(**kwargs)
     dataset = PatchCatalog(**patch_info)
 
-    fit_keys = ['oir_all']
+    fit_keys = ['oir_all', 'lewis']
     for fit_key in fit_keys:
         pipeline.fit(fit_key, [fit_key], dataset)
 
