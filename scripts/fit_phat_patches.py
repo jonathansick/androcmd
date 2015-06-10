@@ -44,7 +44,7 @@ def parse_args():
                         help='Path to patch JSON file')
     parser.add_argument('--vodir',
                         help='VOSpace directory to save results in')
-    return parser.parse_arguments()
+    return parser.parse_args()
 
 
 def download_brick_catalog(brick):
@@ -73,10 +73,11 @@ def download_brick_catalog(brick):
             22: 'http://archive.stsci.edu/pub/hlsp/phat/brick22/hlsp_phat_hst_wfc3-uvis-acs-wfc-wfc3-ir_12076-m31-b22_f275w-f336w-f475w-f814w-f110w-f160w_v2_st.fits',  # NOQA
             23: 'http://archive.stsci.edu/pub/hlsp/phat/brick23/hlsp_phat_hst_wfc3-uvis-acs-wfc-wfc3-ir_12070-m31-b23_f275w-f336w-f475w-f814w-f110w-f160w_v2_st.fits'}  # NOQA
     url = urls[brick]
-    output_path = os.path.join(os.getenv('PHATV2DIR'), os.path.basename(url))
+    output_path = os.path.join(os.getenv('PHATV2DATA'), os.path.basename(url))
     cmd = 'wget -c -nc -O {output} {input}'.format(output=output_path,
                                                    input=url)
-    subprocess.call(cmd, shell=True)
+    if not os.path.exists(output_path):
+        subprocess.call(cmd, shell=True)
 
 
 def get_patch_info(json, brick, patch_num):
@@ -167,10 +168,11 @@ def _make_hess_dataset(group, fit_key, hess):
     return d
 
 
-def upload_result(result_hdf5_path):
+def upload_result(result_hdf5_path, vodir):
     """Upload fit dataset to HDF5."""
-    cmd = 'vcp {0} vos:jonathansick/phat/patches/{1}'.format(
-        result_hdf5_path, os.path.basename(result_hdf5_path))
+    cmd = 'vcp {0} {2}/{1}'.format(
+        result_hdf5_path, os.path.basename(result_hdf5_path),
+        vodir)
     print cmd
     subprocess.call(cmd, shell=True)
 
