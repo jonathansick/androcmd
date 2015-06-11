@@ -5,6 +5,23 @@
 # 2 - patch number(s) (in brick); comma delimited
 # 3 - vos dir. e.g. phat/patches
 
+export HOME="/home/jonathansick"
+export PATH="/home/jonathansick/anaconda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
+export PHATV2DATA="/home/jonathansick/phat_data"
+export DRAINEDATA="/home/jonathansick/draine_data"
+export STARFISH="/home/jonathansick/code/starfish"
+
+cd $HOME
+
+pwd
+
+echo "Variables"
+echo $DRAINEDATA
+echo $PHATV2DATA
+echo $1
+echo $2
+echo $3
+
 getCert
 
 cd $HOME/code/m31hst
