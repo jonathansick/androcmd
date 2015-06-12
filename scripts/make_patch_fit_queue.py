@@ -15,6 +15,7 @@ Make a CANFAR queue for patch fitting.
 import argparse
 import json
 
+import numpy as np
 from canque import Submission
 
 
@@ -28,7 +29,7 @@ def main():
 
     job_num = 0
     for brick in args.bricks:
-        nums = patch_numbers_for_brick(brick, patch_json)
+        nums = patch_numbers_for_brick(brick, patch_json, args.subset)
         while len(nums) > 0:
             create_job(job_num, sub, brick, nums, args.n, args.vodir)
             job_num += 1
@@ -53,12 +54,27 @@ def parse_args():
                         default='phat/patches')
     parser.add_argument('--n', type=int,
                         help='Max number of jobs per brick')
+    parser.add_argument('--subset', type=int,
+                        default=None,
+                        help='Number of patches to randomly select from each'
+                             ' brick')
     return parser.parse_args()
 
 
-def patch_numbers_for_brick(brick, patch_json):
+def patch_numbers_for_brick(brick, patch_json, n_choose):
     nums = []
-    for patch in patch_json:
+    brick_patches = [p for p in patch_json if p['brick'] == brick]
+
+    if n_choose is not None:
+        indices = np.arange(len(brick_patches))
+        sel = np.random.choice(indices,
+                               size=(n_choose,), replace=False)
+        print len(sel)
+        patches = [brick_patches[i] for i in indices[sel]]
+    else:
+        patches = brick_patches
+
+    for patch in patches:
         if patch['brick'] == brick:
             nums.append(int(patch['patch'].split('_')[-1]))
     return nums
