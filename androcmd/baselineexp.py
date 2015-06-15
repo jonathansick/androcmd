@@ -29,6 +29,7 @@ from androcmd.phatpipeline import (SolarZIsocs, SolarLockfile,
                                    LewisBrickDust, PhatCrowding,
                                    ExtendedSolarIsocs, ExtendedSolarLockfile)
 from androcmd.phatpipeline import get_demo_age_grid
+from androcmd.dust import mw_Av, phat_rel_extinction
 
 
 class SolarZPipeline(BaselineTestPhatPlanes, SolarZIsocs,
@@ -416,6 +417,13 @@ def plot_isocs(plot_path, pipeline, dataset):
 
     isoc_set = get_demo_age_grid(**dict(isoc_kind='parsec_CAF09_v1.2S',
                                         photsys_version='yang'))
+
+    # Get extinction in F475W and F160W
+    Av = mw_Av()
+    rel_av = phat_rel_extinction()
+    A_475 = rel_av[2] * Av
+    A_160 = rel_av[5] * Av
+
     plane_key = 'oir_all'
     # plane = pipeline.planes[plane_key]
 
@@ -433,8 +441,8 @@ def plot_isocs(plot_path, pipeline, dataset):
 
     d = Distance(785 * u.kpc)
     for isoc in isoc_set:
-        ax_ages.plot(isoc['F475W'] - isoc['F160W'],
-                     isoc['F160W'] + d.distmod.value,
+        ax_ages.plot(isoc['F475W'] + A_475 - isoc['F160W'] + A_160,
+                     isoc['F160W'] + A_160 + d.distmod.value,
                      c=scalar_map.to_rgba(np.log10(isoc.age)))
     cax_ages = plt.colorbar(mappable=scalar_map, cax=cax_ages, ax=ax_ages,
                             orientation='horizontal')
@@ -458,8 +466,8 @@ def plot_isocs(plot_path, pipeline, dataset):
         phases = phases[srt]
         for p in phases:
             s = np.where(isoc['stage'] == p)[0]
-            ax_phases.plot(isoc['F475W'][s] - isoc['F160W'][s],
-                           isoc['F160W'][s] + d.distmod.value,
+            ax_phases.plot(isoc['F475W'][s] + A_475 - isoc['F160W'][s] + A_160,
+                           isoc['F160W'][s] + A_160 + d.distmod.value,
                            c=scalar_map.to_rgba(p),
                            lw=0.8)
     cb_phases = plt.colorbar(mappable=scalar_map,
