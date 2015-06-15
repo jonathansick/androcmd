@@ -9,6 +9,8 @@ Grid computation of dust attenuation for old vs. young stellar populations.
 import argparse
 
 
+from astropy.coordinates import Distance
+import astropy.units as u
 from androcmd.phatpipeline import PhatCatalog
 from androcmd.baselineexp import SolarZPipeline, ThreeZPipeline
 
@@ -61,6 +63,11 @@ def main():
         dataset = PhatCatalog(args.brick)
         tabulate_fit_chi(args.chi_table, pipeline, dataset)
 
+    if args.plot_isoc is not None:
+        from androcmd.baselineexp import plot_isocs
+        dataset = PhatCatalog(args.brick)
+        plot_isocs(args.plot_isoc, pipeline, dataset)
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -81,6 +88,7 @@ def parse_args():
     parser.add_argument('--plot-zsfh', nargs='*', default=None,
                         choices=['lewis', 'acs_rgb', 'acs_all',
                                  'oir_all', 'ir_rgb'])
+    parser.add_argument('--plot-isoc', default=None)
     return parser.parse_args()
 
 
