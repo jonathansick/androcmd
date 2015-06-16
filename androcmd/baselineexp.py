@@ -487,3 +487,18 @@ def plot_isocs(plot_path, pipeline, dataset):
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_lockfile(plot_path, pipeline):
+    fig = Figure(figsize=(3.5, 3.5), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 1,
+                           left=0.2, right=0.95, bottom=0.15, top=0.95,
+                           wspace=None, hspace=None,
+                           width_ratios=None, height_ratios=None)
+    ax = fig.add_subplot(gs[0])
+    pipeline.plot_lockfile(ax)
+    ax.set_ylim(-0.4, 0.4)
+    ax.set_xlabel(r'$\log(A~\mathrm{yr}^{-1})$')
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
