@@ -14,12 +14,12 @@ import numpy as np
 from astropy.table import Table
 from astropy.io import fits
 import astropy
+from astropy.coordinates import Distance, Angle, SkyCoord
+import astropy.units as u
+
 
 from m31hst import phat_v2_phot_path, phat_brick_path
 from m31hst.phatast import PhatAstTable
-
-from astropy import units as u
-from astropy.coordinates import SkyCoord
 
 from starfisher.pipeline import PipelineBase
 from starfisher.pipeline import PlaneBase
@@ -300,14 +300,33 @@ def build_patches(brick, proj_size=100):
             # area in pc^2, de-projected
             pc_per_arcsec = 785. * 10. ** 3. * np.tan(np.deg2rad(1. / 3600))
             area = area_proj * (pc_per_arcsec) ** 2. / np.cos(77 * np.pi / 180.)  # NOQA
+            ra0 = radec[:, 0].mean()
+            dec0 = radec[:, 1].mean()
+            r_kpc, phi = compute_patch_gal_coords(ra0, dec0)
             patch = {'patch': '{0:02d}_{1:03d}'.format(brick, patch_num),
                      'brick': brick,
                      'poly': radec.tolist(),
-                     'ra0': radec[:, 0].mean(),
-                     'dec0': radec[:, 1].mean(),
+                     'ra0': ra0,
+                     'dec0': dec0,
+                     'r_kpc': r_kpc,
+                     'phi': phi,
                      'area_proj': area_proj,
                      'area': area}
             patches.append(patch)
             patch_num += 1
 
     return patches
+
+
+def compute_patch_gal_coords(ra, dec):
+    """Compute the galactocentric coordinates (radius in kpc; PA in degrees)
+    for a patch given its central coordinate.
+    """
+    from wedge.galaxycoords import galaxy_coords
+    d0 = Distance(785, unit=u.kpc)
+    pa0 = Angle('37d42m54s')
+    incl0 = Angle('77.5d')
+    coord0 = SkyCoord('00h42m44.33s +41d16m07.5s')
+    coord = SkyCoord(ra * u.degree, dec * u.degree)
+    r, phi, r_sky = galaxy_coords(coord, coord0, pa0, incl0, d0)
+    return r.kpc, phi.degree
