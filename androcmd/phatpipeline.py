@@ -291,7 +291,7 @@ class ExtendedSolarLockfile(LockBase):
         self.lockfile = Lockfile(self.builder.read_isofile(), self.synth_dir,
                                  unbinned=False)
 
-        z_bins = [(0.009, 0.0135), (0.0135, 0.022), (0.022, 0.032)]
+        z_bins = [(0.009, 0.0135), (0.014, 0.025), (0.027, 0.042)]
         z_strs = ['0010', '0019', '0028']
 
         # Bin young isochrones
