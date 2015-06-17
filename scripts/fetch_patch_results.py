@@ -11,6 +11,7 @@ import argparse
 
 import vos
 import h5py
+import numpy as np
 
 from androcmd.phatpatchfit import compute_patch_gal_coords
 
@@ -54,6 +55,8 @@ def main():
 
     validate_coords(dataset_patches)
 
+    reduce_sfh_table(dataset, dataset_patches)
+
     dataset.flush()
     dataset.close()
 
@@ -74,6 +77,45 @@ def validate_coords(patch_data):
                                                   group.attrs['dec0'])
             group.attrs['r_kpc'] = r_kpc
             group.attrs['phi'] = phi
+
+
+def reduce_sfh_table(dataset, patches, fit_keys=None):
+    patch_names = []
+    r_kpc = []
+    phi = []
+    mean_ages = []
+    mean_age_errs = []
+    for patch_name, patch_group in patches.items():
+        patch_names.append(patch_name)
+        r_kpc.append(patch_group.attrs['r_kpc'])
+        phi.append(patch_group.attrs['phi'])
+
+        if fit_keys is None:
+            fit_keys = patch_group['sfh'].keys()
+        mean_ages.append([patch_group['sfh'][fit_key].attrs['mean_age'][0]
+                          for fit_key in fit_keys])
+        mean_age_errs.append([patch_group['sfh'][fit_key].attrs['mean_age'][1]
+                              for fit_key in fit_keys])
+
+    # Build a record array
+    age_fmt = 'mean_age_{0}'
+    age_err_fmt = 'mean_age_err_{0}'
+    dtype = [('name', 'S40'), ('r_kpc', float), ('phi', float)] \
+        + [(age_fmt.format(n), float) for n in fit_keys] \
+        + [(age_err_fmt.format(n), float) for n in fit_keys]
+    n = len(patch_names)
+    sfh_table = np.empty(n, dtype=np.dtype(dtype))
+    sfh_table['name'][:] = patch_names
+    sfh_table['r_kpc'][:] = r_kpc
+    sfh_table['phi'][:] = phi
+    for i, fit_key in enumerate(fit_keys):
+        sfh_table[age_fmt.format(fit_key)][:] = [v[i] for v in mean_ages]
+        sfh_table[age_err_fmt.format(fit_key)][:] = [v[i]
+                                                     for v in mean_age_errs]
+
+    if 'sfh_table' in dataset.keys():
+        del dataset['sfh_table']
+    dataset.create_dataset('sfh_table', data=sfh_table)
 
 
 if __name__ == '__main__':
