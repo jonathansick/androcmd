@@ -123,7 +123,9 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
             age_gyr = A ** 10. / 1e9
             mass = mass[srt]
             fractional_mass = np.cumsum(mass) / mass.sum() * 100.
-            result = np.interp([25., 75.], age_gyr, fractional_mass)
+            result = np.interp([25., 75.],
+                               fractional_mass,
+                               age_gyr)
             q25 = result[0]
             q75 = result[1]
             _25.append(q25)
