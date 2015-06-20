@@ -11,6 +11,7 @@ import argparse
 import json
 import subprocess
 import re
+from datetime import datetime
 
 import h5py
 
@@ -34,6 +35,7 @@ def main():
         result_hdf5_path = fit_patch(patch_info)
 
         if args.vodir is not None:
+            subprocess.call('getCert', shell=True)
             upload_result(result_hdf5_path, args.vodir)
 
 
@@ -79,10 +81,13 @@ def download_brick_catalog(brick):
             23: 'http://archive.stsci.edu/pub/hlsp/phat/brick23/hlsp_phat_hst_wfc3-uvis-acs-wfc-wfc3-ir_12070-m31-b23_f275w-f336w-f475w-f814w-f110w-f160w_v2_st.fits'}  # NOQA
     url = urls[brick]
     output_path = os.path.join(os.getenv('PHATV2DATA'), os.path.basename(url))
+    print "Downloading {url}".format(url)
     cmd = 'wget -c -nc -q -O {output} {input}'.format(output=output_path,
                                                       input=url)
+    print "Started at", datetime.utcnow()
     if not os.path.exists(output_path):
         subprocess.call(cmd, shell=True)
+    print "Ended at ", datetime.utcnow()
 
 
 def get_patch_info(json, brick, patch_num):
