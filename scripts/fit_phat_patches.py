@@ -81,7 +81,7 @@ def download_brick_catalog(brick):
             23: 'http://archive.stsci.edu/pub/hlsp/phat/brick23/hlsp_phat_hst_wfc3-uvis-acs-wfc-wfc3-ir_12070-m31-b23_f275w-f336w-f475w-f814w-f110w-f160w_v2_st.fits'}  # NOQA
     url = urls[brick]
     output_path = os.path.join(os.getenv('PHATV2DATA'), os.path.basename(url))
-    print "Downloading {url}".format(url)
+    print "Downloading {url}".format(url=url)
     cmd = 'wget -c -nc -q -O {output} {input}'.format(output=output_path,
                                                       input=url)
     print "Started at", datetime.utcnow()
