@@ -141,8 +141,8 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
     dtype = [('name', 'S40'), ('r_kpc', float), ('phi', float)] \
         + [(age_fmt.format(n), float) for n in fit_keys] \
         + [(age_err_fmt.format(n), float) for n in fit_keys] \
-        + [(age_25_fmt.format(n), float)] \
-        + [(age_75_fmt.format(n), float)]
+        + [(age_25_fmt.format(n), float) for n in fit_keys] \
+        + [(age_75_fmt.format(n), float) for n in fit_keys]
     n = len(patch_names)
     sfh_table = np.empty(n, dtype=np.dtype(dtype))
     sfh_table['name'][:] = patch_names
@@ -153,7 +153,7 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
         sfh_table[age_err_fmt.format(fit_key)][:] = [v[i]
                                                      for v in mean_age_errs]
         sfh_table[age_25_fmt.format(fit_key)][:] = [v[i] for v in ages_25]
-        sfh_table[age_25_fmt.format(fit_key)][:] = [v[i] for v in ages_25]
+        sfh_table[age_75_fmt.format(fit_key)][:] = [v[i] for v in ages_75]
 
     if 'sfh_table' in dataset.keys():
         del dataset['sfh_table']
