@@ -24,7 +24,9 @@ def main():
 
     if args.radial_sfh_points is not None:
         plot_radial_sfh_points(dataset, args.radial_sfh_points)
-        plot_radial_sfh_intervals(dataset, args.radial_sfh_points)
+
+    if args.radial_sfh_intervals is not None:
+        plot_radial_sfh_intervals(dataset, args.radial_sfh_intervals)
 
 
 def parse_args():
@@ -46,12 +48,15 @@ def plot_radial_sfh_points(dataset, plot_path):
     R = dataset['sfh_table']['r_kpc'][:]
     mean_age = dataset['sfh_table']['mean_age_oir_all'][:]
     mean_age_ms = dataset['sfh_table']['mean_age_lewis'][:]
-    ax.scatter(R, mean_age, s=3, edgecolors='None', facecolors='dodgerblue')
-    ax.scatter(R, mean_age_ms, s=3, edgecolors='None', facecolors='firebrick')
+    ax.scatter(R, mean_age, s=3, edgecolors='None', facecolors='firebrick',
+               label='OIR-ALL')
+    ax.scatter(R, mean_age_ms, s=3, edgecolors='None', facecolors='dodgerblue',
+               label='ACS-MS')
     ax.set_xlim(0., 30.)
     ax.set_ylim(0., 14.)
     ax.set_xlabel(r'$R_\mathrm{maj}$ (kpc)')
     ax.set_ylabel(r'$\langle A \rangle$ (Gyr)')
+    ax.legend(frameon=True, markerscale=2, ncol=2)
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
