@@ -87,6 +87,7 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
     mean_age_errs = []
     ages_25 = []
     ages_75 = []
+    chisqs = []
     for patch_name, patch_group in patches.items():
         patch_names.append(patch_name)
         r_kpc.append(patch_group.attrs['r_kpc'])
@@ -98,6 +99,8 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
                           for fit_key in fit_keys])
         mean_age_errs.append([patch_group['sfh'][fit_key].attrs['mean_age'][1]
                               for fit_key in fit_keys])
+        chisqs.append([patch_group['chi_hess'][fit_key].attrs['chi_red']
+                       for fit_key in fit_keys])
 
         # Compute the 25th and 75th percentils of cumulative SF.
         _25 = []
@@ -138,11 +141,13 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
     age_err_fmt = 'mean_age_err_{0}'
     age_25_fmt = 'age_25_{0}'
     age_75_fmt = 'age_75_{0}'
+    chi_fmt = 'chi_red_{0}'
     dtype = [('name', 'S40'), ('r_kpc', float), ('phi', float)] \
         + [(age_fmt.format(n), float) for n in fit_keys] \
         + [(age_err_fmt.format(n), float) for n in fit_keys] \
         + [(age_25_fmt.format(n), float) for n in fit_keys] \
-        + [(age_75_fmt.format(n), float) for n in fit_keys]
+        + [(age_75_fmt.format(n), float) for n in fit_keys] \
+        + [(chi_fmt.format(n), float) for n in fit_keys]
     n = len(patch_names)
     sfh_table = np.empty(n, dtype=np.dtype(dtype))
     sfh_table['name'][:] = patch_names
@@ -154,6 +159,8 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
                                                      for v in mean_age_errs]
         sfh_table[age_25_fmt.format(fit_key)][:] = [v[i] for v in ages_25]
         sfh_table[age_75_fmt.format(fit_key)][:] = [v[i] for v in ages_75]
+        sfh_table[age_75_fmt.format(fit_key)][:] = [v[i] for v in ages_75]
+        sfh_table[chi_fmt.format(fit_key)][:] = [v[i] for v in chisqs]
 
     if 'sfh_table' in dataset.keys():
         del dataset['sfh_table']
