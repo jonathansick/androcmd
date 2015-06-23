@@ -28,12 +28,16 @@ def main():
     if args.radial_sfh_intervals is not None:
         plot_radial_sfh_intervals(dataset, args.radial_sfh_intervals)
 
+    if args.rchi_hist is not None:
+        plot_reduced_chi_hist(dataset, args.rchi_hist)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('hdf5_path')
     parser.add_argument('--radial-sfh-points', default=None)
     parser.add_argument('--radial-sfh-intervals', default=None)
+    parser.add_argument('--rchi-hist', default=None)
     return parser.parse_args()
 
 
@@ -81,6 +85,29 @@ def plot_radial_sfh_intervals(dataset, plot_path):
     ax.scatter(R, age_25, s=3, marker='^',
                edgecolors='None', facecolors='dodgerblue')
 
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_reduced_chi_hist(dataset, plot_path):
+    chisq_ms = dataset['sfh_table']['chi_red_lewis'][:]
+    chisq_oir = dataset['sfh_table']['chi_red_oir_all'][:]
+
+    fig = Figure(figsize=(3.5, 3.5), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 1,
+                           left=0.15, right=0.95, bottom=0.15, top=0.95,
+                           wspace=None, hspace=None,
+                           width_ratios=None, height_ratios=None)
+    ax = fig.add_subplot(gs[0])
+    ax.hist(chisq_ms, 20, histtype='step', edgecolor='dodgerblue',
+            label='ACS-MS')
+    ax.hist(chisq_oir, 20, histtype='step', edgecolor='firebrick',
+            label='OIR-ALL')
+    ax.set_xlabel(r'$\chi_r^2$')
+    ax.set_ylabel(r'Patches')
+    ax.set_xlim(0, 30)
+    ax.legend()
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
