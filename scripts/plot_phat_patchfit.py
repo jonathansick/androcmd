@@ -35,6 +35,7 @@ def main():
 
     if args.sfh_lines is not None:
         plot_sfh_lines(dataset, args.sfh_lines)
+        plot_sfh_lines_phi(dataset, args.sfh_lines + "_phi")
 
 
 def parse_args():
@@ -151,6 +152,50 @@ def plot_sfh_lines(dataset, plot_path):
         ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(base=1))
     for tl in ax_ms.get_xmajorticklabels():
         tl.set_visible(False)
+    ax_oir.set_xlabel(r'$\log(A~\mathrm{Gyr}^{-1})$')
+    ax_ms.text(0.1, 0.9, 'ACS-MS', transform=ax_ms.transAxes)
+    ax_oir.text(0.1, 0.9, 'OIR-ALL', transform=ax_oir.transAxes)
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_sfh_lines_phi(dataset, plot_path):
+    """Plot SFH for each patch, keyed by PA"""
+    fig = Figure(figsize=(6, 6), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(2, 2,
+                           left=0.1, right=0.9, bottom=0.1, top=0.95,
+                           wspace=0.1, hspace=0.1,
+                           width_ratios=(1, 0.1), height_ratios=None)
+    ax_ms = fig.add_subplot(gs[0, 0])
+    ax_oir = fig.add_subplot(gs[1, 0])
+    ax_cb = fig.add_subplot(gs[:, 1])
+
+    patches = dataset['patches']
+    cmap = perceptual_rainbow_16.mpl_colormap
+    normalizer = mpl.colors.Normalize(vmin=0, vmax=360., clip=True)
+    mapper = mpl.cm.ScalarMappable(norm=normalizer, cmap=cmap)
+    map_values = []
+    for patch_name, patch_group in patches.items():
+        for fit_key, ax in zip(('lewis', 'oir_all'), (ax_ms, ax_oir)):
+            phi = patch_group.attrs['phi']
+            map_values.append(phi)
+            sfh_table = patch_group['sfh'][fit_key]
+            logage, sfr = marginalize_metallicity(sfh_table)
+            ax.plot(logage, np.log10(sfr), '-', lw=0.5,
+                    c=mapper.to_rgba(phi, alpha=0.5))
+    print min(map_values), max(map_values)
+    mapper.set_array(np.array(map_values))
+    cbar = fig.colorbar(mapper, cax=ax_cb, orientation='vertical')
+    cbar.set_label(r'$\phi$ (degree)')
+    for ax in (ax_ms, ax_oir):
+        ax.set_xlim(6.4, 10.2)
+        ax.set_ylabel(r'$\log(\mathrm{SFR})$')
+        ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(base=1))
+    for tl in ax_ms.get_xmajorticklabels():
+        tl.set_visible(False)
+    ax_ms.text(0.1, 0.9, 'ACS-MS', transform=ax_ms.transAxes)
+    ax_oir.text(0.1, 0.9, 'OIR-ALL', transform=ax_oir.transAxes)
     ax_oir.set_xlabel(r'$\log(A~\mathrm{Gyr}^{-1})$')
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
