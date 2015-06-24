@@ -37,6 +37,12 @@ def main():
         plot_sfh_lines(dataset, args.sfh_lines)
         plot_sfh_lines_phi(dataset, args.sfh_lines + "_phi")
 
+    if args.mean_sfr_map is not None:
+        plot_mean_sfr_map(dataset, args.mean_sfr_map)
+
+    if args.mean_age_map is not None:
+        plot_mean_age_map(dataset, args.mean_age_map)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -45,6 +51,8 @@ def parse_args():
     parser.add_argument('--radial-sfh-intervals', default=None)
     parser.add_argument('--rchi-hist', default=None)
     parser.add_argument('--sfh-lines', default=None)
+    parser.add_argument('--mean-sfr-map', default=None)
+    parser.add_argument('--mean-age-map', default=None)
     return parser.parse_args()
 
 
@@ -220,6 +228,89 @@ def marginalize_metallicity(sfh_table):
     A = A[srt]
     sfr = sfr[srt]
     return A, sfr
+
+
+def plot_mean_sfr_map(dataset, plot_path):
+    """Plot maps of the mean star formation rate in the patches."""
+    fig = Figure(figsize=(6, 3.0), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 3,
+                           left=0.15, right=0.85, bottom=0.15, top=0.95,
+                           wspace=0.1, hspace=None,
+                           width_ratios=(1, 1, 0.08), height_ratios=None)
+    ax_ms = fig.add_subplot(gs[0])
+    ax_oir = fig.add_subplot(gs[1])
+    ax_cb = fig.add_subplot(gs[2])
+
+    patches = dataset['patches']
+    cmap = perceptual_rainbow_16.mpl_colormap
+    normalizer = mpl.colors.Normalize(vmin=-12, vmax=-4, clip=True)
+
+    for ax, fit_key in zip([ax_ms, ax_oir], ['lewis', 'oir_all']):
+        ra = []
+        dec = []
+        mean_logsfr = []
+        for patch_name, patch_group in patches.items():
+            sfh_table = patch_group['sfh'][fit_key]
+            t = np.empty(len(sfh_table), dtype=sfh_table.dtype)
+            sfh_table.read_direct(t, source_sel=None, dest_sel=None)
+            for k, v in patch_group.attrs.iteritems():
+                print k, v
+            mean_logsfr.append(np.log10(t['sfr']).mean())
+            ra.append(patch_group.attrs['ra0'])
+            dec.append(patch_group.attrs['dec0'])
+        mapper = ax.scatter(ra, dec, c=mean_logsfr, norm=normalizer, cmap=cmap,
+                            edgecolors='None')
+        ax.invert_xaxis()
+        ax.set_xlabel(r'$\alpha$')
+    ax_ms.set_ylabel(r'$\delta$')
+    for tl in ax_oir.get_ymajorticklabels():
+        tl.set_visible(False)
+    ax_ms.text(0.9, 0.9, 'ACS-MS', transform=ax_ms.transAxes, ha='right')
+    ax_oir.text(0.9, 0.9, 'OIR-ALL', transform=ax_oir.transAxes, ha='right')
+
+    cbar = fig.colorbar(mapper, cax=ax_cb, orientation='vertical')
+    cbar.set_label(r'$\langle \mathrm{SFR} \rangle$')
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_mean_age_map(dataset, plot_path):
+    """Plot maps of the mean stellar age in the patches."""
+    fig = Figure(figsize=(6, 3.0), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 3,
+                           left=0.15, right=0.85, bottom=0.15, top=0.95,
+                           wspace=0.1, hspace=None,
+                           width_ratios=(1, 1, 0.08), height_ratios=None)
+    ax_ms = fig.add_subplot(gs[0])
+    ax_oir = fig.add_subplot(gs[1])
+    ax_cb = fig.add_subplot(gs[2])
+
+    ra = dataset['sfh_table']['ra'][:]
+    dec = dataset['sfh_table']['dec'][:]
+
+    cmap = perceptual_rainbow_16.mpl_colormap
+    normalizer = mpl.colors.Normalize(vmin=0, vmax=13.7, clip=True)
+
+    for ax, fit_key in zip([ax_ms, ax_oir], ['lewis', 'oir_all']):
+        mean_age = dataset['sfh_table']['mean_age_{0}'.format(fit_key)]
+        mapper = ax.scatter(ra, dec, c=mean_age, norm=normalizer, cmap=cmap,
+                            edgecolors='None')
+        ax.invert_xaxis()
+        ax.set_xlabel(r'$\alpha$')
+    ax_ms.set_ylabel(r'$\delta$')
+    for tl in ax_oir.get_ymajorticklabels():
+        tl.set_visible(False)
+    ax_ms.text(0.9, 0.9, 'ACS-MS', transform=ax_ms.transAxes, ha='right')
+    ax_oir.text(0.9, 0.9, 'OIR-ALL', transform=ax_oir.transAxes, ha='right')
+
+    cbar = fig.colorbar(mapper, cax=ax_cb, orientation='vertical')
+    cbar.set_label(r'$\langle A \rangle$ (Gyr)')
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
 
 
 if __name__ == '__main__':

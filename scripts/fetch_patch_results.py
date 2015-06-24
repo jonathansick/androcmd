@@ -81,6 +81,8 @@ def validate_coords(patch_data):
 
 def reduce_sfh_table(dataset, patches, fit_keys=None):
     patch_names = []
+    ra = []
+    dec = []
     r_kpc = []
     phi = []
     mean_ages = []
@@ -92,6 +94,8 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
         patch_names.append(patch_name)
         r_kpc.append(patch_group.attrs['r_kpc'])
         phi.append(patch_group.attrs['phi'])
+        ra.append(patch_group.attrs['ra0'])
+        dec.append(patch_group.attrs['dec0'])
 
         if fit_keys is None:
             fit_keys = patch_group['sfh'].keys()
@@ -143,6 +147,7 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
     age_75_fmt = 'age_75_{0}'
     chi_fmt = 'chi_red_{0}'
     dtype = [('name', 'S40'), ('r_kpc', float), ('phi', float)] \
+        + [('ra', float), ('dec', float)] \
         + [(age_fmt.format(n), float) for n in fit_keys] \
         + [(age_err_fmt.format(n), float) for n in fit_keys] \
         + [(age_25_fmt.format(n), float) for n in fit_keys] \
@@ -153,6 +158,8 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
     sfh_table['name'][:] = patch_names
     sfh_table['r_kpc'][:] = r_kpc
     sfh_table['phi'][:] = phi
+    sfh_table['ra'][:] = ra
+    sfh_table['dec'][:] = dec
     for i, fit_key in enumerate(fit_keys):
         sfh_table[age_fmt.format(fit_key)][:] = [v[i] for v in mean_ages]
         sfh_table[age_err_fmt.format(fit_key)][:] = [v[i]
