@@ -17,6 +17,8 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.gridspec as gridspec
 from palettable.cubehelix import perceptual_rainbow_16
+import wcsaxes
+import astropy.io.fits
 
 
 def main():
@@ -272,21 +274,12 @@ def plot_mean_sfr_map(dataset, plot_path):
     cbar = fig.colorbar(mapper, cax=ax_cb, orientation='vertical')
     cbar.set_label(r'$\langle \mathrm{SFR} \rangle$')
 
-    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
 
 def plot_mean_age_map(dataset, plot_path):
     """Plot maps of the mean stellar age in the patches."""
-    fig = Figure(figsize=(6, 3.0), frameon=False)
-    canvas = FigureCanvas(fig)
-    gs = gridspec.GridSpec(1, 3,
-                           left=0.15, right=0.85, bottom=0.15, top=0.95,
-                           wspace=0.1, hspace=None,
-                           width_ratios=(1, 1, 0.08), height_ratios=None)
-    ax_ms = fig.add_subplot(gs[0])
-    ax_oir = fig.add_subplot(gs[1])
-    ax_cb = fig.add_subplot(gs[2])
+    fig, canvas, ax_ms, ax_oir, ax_cb = create_wcs_axes()
 
     ra = dataset['sfh_table']['ra'][:]
     dec = dataset['sfh_table']['dec'][:]
@@ -297,20 +290,49 @@ def plot_mean_age_map(dataset, plot_path):
     for ax, fit_key in zip([ax_ms, ax_oir], ['lewis', 'oir_all']):
         mean_age = dataset['sfh_table']['mean_age_{0}'.format(fit_key)]
         mapper = ax.scatter(ra, dec, c=mean_age, norm=normalizer, cmap=cmap,
-                            edgecolors='None')
-        ax.invert_xaxis()
-        ax.set_xlabel(r'$\alpha$')
-    ax_ms.set_ylabel(r'$\delta$')
-    for tl in ax_oir.get_ymajorticklabels():
-        tl.set_visible(False)
-    ax_ms.text(0.9, 0.9, 'ACS-MS', transform=ax_ms.transAxes, ha='right')
-    ax_oir.text(0.9, 0.9, 'OIR-ALL', transform=ax_oir.transAxes, ha='right')
+                            edgecolors='None', s=6,
+                            transform=ax.get_transform('world'))
 
     cbar = fig.colorbar(mapper, cax=ax_cb, orientation='vertical')
     cbar.set_label(r'$\langle A \rangle$ (Gyr)')
-
-    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def create_wcs_axes(ref_path='m31_80.fits'):
+    fig = Figure(figsize=(6, 3.0), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 3,
+                           left=0.08, right=0.85, bottom=0.15, top=0.95,
+                           wspace=0.05, hspace=None,
+                           width_ratios=(1, 1, 0.08), height_ratios=None)
+
+    with astropy.io.fits.open(ref_path) as f:
+        header = f[0].header
+        base_image = f[0].data
+        wcs = wcsaxes.WCS(header)
+
+    ax_ms = fig.add_subplot(gs[0], projection=wcs)
+    ax_oir = fig.add_subplot(gs[1], projection=wcs)
+    ax_cb = fig.add_subplot(gs[2])
+
+    for ax in (ax_oir, ax_ms):
+        # ax.invert_xaxis()
+        ax.set_xlim(-0.5, base_image.shape[1] - 0.5)
+        ax.set_ylim(-0.5, base_image.shape[0] - 0.5)
+        ax.imshow(np.log10(base_image),
+                  cmap=mpl.cm.gray_r, vmin=0.3, vmax=0.6,
+                  zorder=-10,
+                  origin='lower')
+        ax.set_xlim(2000, 9500)
+        ax.coords[1].set_major_formatter('d.d')
+        ax.coords[0].set_major_formatter('hh:mm')
+    ax_oir.coords[1].ticklabels.set_visible(False)
+    ax_ms.text(0.1, 0.9, 'ACS-MS', transform=ax_ms.transAxes, ha='left',
+               zorder=10)
+    ax_oir.text(0.1, 0.9, 'OIR-ALL', transform=ax_oir.transAxes, ha='left',
+                zorder=10)
+
+    return fig, canvas, ax_ms, ax_oir, ax_cb
 
 
 if __name__ == '__main__':
