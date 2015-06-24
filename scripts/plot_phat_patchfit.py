@@ -279,7 +279,7 @@ def plot_mean_sfr_map(dataset, plot_path):
 
 def plot_mean_age_map(dataset, plot_path):
     """Plot maps of the mean stellar age in the patches."""
-    fig, canvas, ax_ms, ax_oir, ax_cb = create_wcs_axes()
+    fig, canvas, ax_ms, ax_oir, ax_cb = create_wcs_axes_galex()
 
     ra = dataset['sfh_table']['ra'][:]
     dec = dataset['sfh_table']['dec'][:]
@@ -290,7 +290,7 @@ def plot_mean_age_map(dataset, plot_path):
     for ax, fit_key in zip([ax_ms, ax_oir], ['lewis', 'oir_all']):
         mean_age = dataset['sfh_table']['mean_age_{0}'.format(fit_key)]
         mapper = ax.scatter(ra, dec, c=mean_age, norm=normalizer, cmap=cmap,
-                            edgecolors='None', s=6,
+                            edgecolors='None', s=12,
                             transform=ax.get_transform('world'))
 
     cbar = fig.colorbar(mapper, cax=ax_cb, orientation='vertical')
@@ -330,6 +330,45 @@ def create_wcs_axes(ref_path='m31_80.fits'):
     ax_ms.text(0.1, 0.9, 'ACS-MS', transform=ax_ms.transAxes, ha='left',
                zorder=10)
     ax_oir.text(0.1, 0.9, 'OIR-ALL', transform=ax_oir.transAxes, ha='left',
+                zorder=10)
+
+    return fig, canvas, ax_ms, ax_oir, ax_cb
+
+
+def create_wcs_axes_galex(ref_path='h_m31-nd-int.fits'):
+    fig = Figure(figsize=(6, 4.0), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 3,
+                           left=0.08, right=0.85, bottom=0.1, top=0.90,
+                           wspace=0.05, hspace=None,
+                           width_ratios=(1, 1, 0.08), height_ratios=None)
+
+    with astropy.io.fits.open(ref_path) as f:
+        header = f[0].header
+        base_image = f[0].data
+        wcs = wcsaxes.WCS(header)
+
+    ax_ms = fig.add_subplot(gs[0], projection=wcs)
+    ax_oir = fig.add_subplot(gs[1], projection=wcs)
+    ax_cb = fig.add_subplot(gs[2])
+
+    for ax in (ax_oir, ax_ms):
+        # ax.invert_xaxis()
+        ax.set_xlim(-0.5, base_image.shape[1] - 0.5)
+        ax.set_ylim(-0.5, base_image.shape[0] - 0.5)
+        ax.imshow(np.log10(base_image),
+                  cmap=mpl.cm.gray_r, vmin=-2., vmax=-1,
+                  zorder=-10,
+                  origin='lower')
+        ax.set_xlim(500, 3000)
+        ax.set_ylim(2800, 6189)
+        ax.coords[1].set_major_formatter('d.d')
+        ax.coords[0].set_major_formatter('hh:mm')
+        ax.coords[0].set_separator(('d', "'", '"'))
+    ax_oir.coords[1].ticklabels.set_visible(False)
+    ax_ms.text(0.1, 0.1, 'ACS-MS', transform=ax_ms.transAxes, ha='left',
+               zorder=10)
+    ax_oir.text(0.1, 0.1, 'OIR-ALL', transform=ax_oir.transAxes, ha='left',
                 zorder=10)
 
     return fig, canvas, ax_ms, ax_oir, ax_cb
