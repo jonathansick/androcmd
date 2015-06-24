@@ -35,6 +35,7 @@ setup(
     ],
     package_dir={'androcmd': 'androcmd'},
     include_package_data=True,
+    package_data={'andrcomd': ['data/*.json']},
     install_requires=[
         'numpy',
         'astropy',
