@@ -20,6 +20,8 @@ from palettable.cubehelix import perceptual_rainbow_16
 import wcsaxes
 import astropy.io.fits
 
+from androcmd.phat_footprints import load_brick_footprints
+
 
 def main():
     args = parse_args()
@@ -329,6 +331,8 @@ def create_wcs_axes_galex(ref_path='h_m31-nd-int.fits'):
                            wspace=0.05, hspace=None,
                            width_ratios=(1, 1, 0.08), height_ratios=None)
 
+    footprints = load_brick_footprints()
+
     with astropy.io.fits.open(ref_path) as f:
         header = f[0].header
         base_image = f[0].data
@@ -351,6 +355,17 @@ def create_wcs_axes_galex(ref_path='h_m31-nd-int.fits'):
         ax.coords[1].set_major_formatter('d.d')
         ax.coords[0].set_major_formatter('hh:mm')
         ax.coords[0].set_separator(('h', "'", '"'))
+
+        # Plot phat footprints
+        for brick, footprint in footprints.iteritems():
+            print brick
+            print footprint
+            patch = mpl.patches.Polygon(footprint, closed=True,
+                                        transform=ax.get_transform('world'),
+                                        facecolor='y', alpha=0.1,
+                                        edgecolor='None')
+            ax.add_patch(patch)
+
     ax_oir.coords[1].ticklabels.set_visible(False)
     ax_ms.text(0.1, 0.1, 'ACS-MS', transform=ax_ms.transAxes, ha='left',
                zorder=10)
