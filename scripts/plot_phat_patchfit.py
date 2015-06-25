@@ -20,7 +20,7 @@ from palettable.cubehelix import perceptual_rainbow_16
 import wcsaxes
 import astropy.io.fits
 
-from androcmd.phat_footprints import load_brick_footprints
+from androcmd.phatpatchfit import load_field_footprints
 
 
 def main():
@@ -250,8 +250,6 @@ def plot_mean_sfr_map(dataset, plot_path):
             sfh_table = patch_group['sfh'][fit_key]
             t = np.empty(len(sfh_table), dtype=sfh_table.dtype)
             sfh_table.read_direct(t, source_sel=None, dest_sel=None)
-            for k, v in patch_group.attrs.iteritems():
-                print k, v
             mean_logsfr.append(np.log10(t['sfr']).mean())
             ra.append(patch_group.attrs['ra0'])
             dec.append(patch_group.attrs['dec0'])
@@ -331,8 +329,6 @@ def create_wcs_axes_galex(ref_path='h_m31-nd-int.fits'):
                            wspace=0.05, hspace=None,
                            width_ratios=(1, 1, 0.08), height_ratios=None)
 
-    footprints = load_brick_footprints()
-
     with astropy.io.fits.open(ref_path) as f:
         header = f[0].header
         base_image = f[0].data
@@ -357,13 +353,11 @@ def create_wcs_axes_galex(ref_path='h_m31-nd-int.fits'):
         ax.coords[0].set_separator(('h', "'", '"'))
 
         # Plot phat footprints
-        for brick, footprint in footprints.iteritems():
-            print brick
-            print footprint
+        for footprint in load_field_footprints():
             patch = mpl.patches.Polygon(footprint, closed=True,
                                         transform=ax.get_transform('world'),
                                         facecolor='y', alpha=0.1,
-                                        edgecolor='None')
+                                        edgecolor='k', lw=0.5)
             ax.add_patch(patch)
 
     ax_oir.coords[1].ticklabels.set_visible(False)

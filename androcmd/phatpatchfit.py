@@ -7,6 +7,8 @@ Tools for the pan-M31 PHAT patch fitting exercise.
 
 import os
 from collections import OrderedDict
+import json
+from pkg_resources import resource_stream, resource_exists
 
 from matplotlib.path import Path
 
@@ -444,3 +446,21 @@ def galaxy_coords(coord, glx_ctr, glx_PA, glx_incl, glx_dist):
         obj_phi = Angle(2. * np.pi, unit=u.rad) + obj_phi
 
     return obj_dist, obj_phi, sky_radius.arcsec
+
+
+def load_brick_footprints():
+    path = "data/phat_brick_footprints.json"
+    assert resource_exists(__name__, path)
+    return json.load(resource_stream(__name__, path))
+
+
+def load_field_patches():
+    """Load the patch dataset associated with PHAT fields."""
+    path = "data/phat_field_patches.json"
+    assert resource_exists(__name__, path)
+    return json.load(resource_stream(__name__, path))
+
+
+def load_field_footprints():
+    patches = load_field_patches()
+    return [patch['poly'] for patch in patches]
