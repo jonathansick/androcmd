@@ -18,7 +18,7 @@ from astropy.coordinates import Distance, Angle, SkyCoord
 import astropy.units as u
 
 
-from m31hst import phat_v2_phot_path, phat_brick_path
+from m31hst import phat_v2_phot_path, phat_brick_path, phat_field_path
 from m31hst.phatast import PhatAstTable
 
 from starfisher.pipeline import PipelineBase
@@ -316,6 +316,57 @@ def build_patches(brick, proj_size=100):
                      'area': area}
             patches.append(patch)
             patch_num += 1
+
+    return patches
+
+
+def build_field_patches(brick):
+    """Build patches where PHAT fields correspond to the patch units.
+    There are 18 fields per brick.
+    """
+    fields = range(1, 19)
+    patches = []
+
+    # theta = np.rad2deg(np.arctan(proj_size / (785. * 10. ** 3.)))
+    for field in fields:
+        # Get the patch FITS file
+        path = phat_field_path(brick, field, 'f814w')
+        with fits.open(path) as f:
+            header = fits.getheader(f, 'SCI')
+            wm = fits['WHT'].data
+            wcs = astropy.wcs.WCS(header)
+
+        # degree per pixel
+        pixel_scale = np.mean(
+            np.sqrt(astropy.wcs.utils.proj_plane_pixel_scales(wcs) ** 2.))
+
+        # Number of good pixels
+        npix = len(np.where(wm > 0.)[0])
+
+        footprint = wcs.calc_footprint()
+
+        # projected arcsec^2
+        area_proj = npix * (pixel_scale * 3600.) ** 2.
+        # area in pc^2, projected
+        pc_per_arcsec = 785. * 10. ** 3. * np.tan(np.deg2rad(1. / 3600))
+        area = area_proj * (pc_per_arcsec) ** 2. / np.cos(77 * np.pi / 180.)  # NOQA
+
+        ra0 = footprint[:, 0].mean()
+        dec0 = footprint[:, 1].mean()
+
+        r_kpc, phi = compute_patch_gal_coords(ra0, dec0)
+
+        patch = {'patch': '{0:02d}_{1:03d}'.format(brick, field),
+                 'brick': brick,
+                 'field': field,
+                 'poly': footprint.tolist(),
+                 'ra0': ra0,
+                 'dec0': dec0,
+                 'r_kpc': r_kpc,
+                 'phi': phi,
+                 'area_proj': area_proj,
+                 'area': area}
+        patches.append(patch)
 
     return patches
 
