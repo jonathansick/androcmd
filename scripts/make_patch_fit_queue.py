@@ -3,15 +3,9 @@
 """
 Make a CANFAR queue for patch fitting.
 
->>> from canque import Submission
->>> sub = Submission(user_name, script_path)
->>> sub.add_job('my args', "job.log")
->>> sub.write("jobs.sub")
-
 2015-06-10 - Created by Jonathan Sick
 """
 
-import os
 import argparse
 import json
 
@@ -30,25 +24,15 @@ def main():
         patch_numbers[brick] = patch_numbers_for_brick(brick, patch_json)
 
     i = 0
-    j = 0
-    repeat = True
-    while repeat:
-        i += 1
-        sub = Submission('jonathansick',
-                         'androcmd_scripts/patch_fit.sh')
-        for brick in args.bricks:
-            j += 1
-            print len(patch_numbers[brick]),
+    sub = Submission('jonathansick',
+                     'androcmd_scripts/patch_fit.sh')
+    for brick in args.bricks:
+        while len(patch_numbers[brick]) > 0:
             selected_patches = select_patches(patch_numbers[brick], args.n)
-            print len(patch_numbers[brick])
-            add_job(j, sub, brick, selected_patches, args.vodir)
+            add_job(i, sub, brick, selected_patches, args.vodir)
+            i += 1
 
-        sub.write(os.path.splitext(args.queue_file)[0]
-                  + '_{0:d}.sub'.format(i))
-
-        for brick in args.bricks:
-            if len(patch_numbers[brick]) == 0:
-                repeat = False
+    sub.write(args.queue_file)
 
 
 def parse_args():
