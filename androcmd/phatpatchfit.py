@@ -20,6 +20,7 @@ import astropy.units as u
 
 from m31hst import phat_v2_phot_path, phat_brick_path, phat_field_path
 from m31hst.phatast import PhatAstTable
+from m31hst.paths import MissingData
 
 from starfisher.pipeline import PipelineBase
 from starfisher.pipeline import PlaneBase
@@ -330,11 +331,19 @@ def build_field_patches(brick):
     # theta = np.rad2deg(np.arctan(proj_size / (785. * 10. ** 3.)))
     for field in fields:
         # Get the patch FITS file
-        path = phat_field_path(brick, field, 'f814w')
+        try:
+            path = phat_field_path(brick, field, 'f110w')
+        except MissingData:
+            print brick, field, 'missing'
+        print field, path
         with fits.open(path) as f:
-            header = fits.getheader(f, 'SCI')
-            wm = fits['WHT'].data
-            wcs = astropy.wcs.WCS(header)
+            header = f[1].header  # SCI
+            wm = f[2].data  # WHT
+            try:
+                wcs = astropy.wcs.WCS(header, fobj=f)
+            except KeyError:  # KeyError
+                print "skipping because of bad WCS"
+                continue
 
         # degree per pixel
         pixel_scale = np.mean(
