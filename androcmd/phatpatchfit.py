@@ -171,6 +171,7 @@ class PatchCatalog(DatasetBase):
         self.area_proj = kwargs.pop('area_proj')
         self.r_kpc = kwargs.pop('r_kpc')
         self.phi = kwargs.pop('phi')
+        self.field = kwargs.pop('field')
         print "uncaught PatchCatalog keywords", kwargs
         super(PatchCatalog, self).__init__(**kwargs)
 
