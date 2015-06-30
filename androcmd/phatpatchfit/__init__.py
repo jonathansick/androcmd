@@ -10,3 +10,4 @@ from .pipeline import (PatchFitPlanes, LewisPatchDust, AutoPhatCrowding,
                        build_field_patches, compute_patch_gal_coords,
                        galaxy_coords, load_brick_footprints,
                        load_field_patches, load_field_footprints)
+from .galexmap import load_galex_map, setup_galex_axes

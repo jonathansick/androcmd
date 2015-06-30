@@ -20,7 +20,8 @@ from palettable.cubehelix import perceptual_rainbow_16
 import wcsaxes
 import astropy.io.fits
 
-from androcmd.phatpatchfit import load_field_footprints
+from androcmd.phatpatchfit import (load_field_footprints, load_galex_map,
+                                   setup_galex_axes)
 
 
 def main():
@@ -380,12 +381,7 @@ def plot_epoch_sfr_maps(dataset, plot_path):
     fit_keys = ['lewis', 'oir_all']
     ages = [100, 250, 500, 1000]  # Myr
 
-    # Load basemap for coordinates
-    ref_path = 'h_m31-nd-int.fits'
-    with astropy.io.fits.open(ref_path) as f:
-        header = f[0].header
-        base_image = f[0].data
-        wcs = wcsaxes.WCS(header)
+    basemap = load_galex_map()
 
     fig = Figure(figsize=(9, 5), frameon=False)
     canvas = FigureCanvas(fig)
@@ -394,26 +390,15 @@ def plot_epoch_sfr_maps(dataset, plot_path):
                            left=0.05, right=0.9, bottom=0.15, top=0.95,
                            wspace=0.05, hspace=0.05,
                            width_ratios=(1, 1, 1, 1, 0.1), height_ratios=None)
-    axes_ms = [fig.add_subplot(gs[0, i], projection=wcs)
+    axes_ms = [setup_galex_axes(fig, gs[0, i], basemap)
                for i in range(nfig)]
-    axes_oir = [fig.add_subplot(gs[1, i], projection=wcs)
+    axes_oir = [setup_galex_axes(fig, gs[1, i], basemap)
                 for i in range(nfig)]
     ax_cb_oir = fig.add_subplot(gs[1, nfig])
     ax_cb_ms = fig.add_subplot(gs[0, nfig])
 
     for i, (age, ax_ms, ax_oir) in enumerate(zip(ages, axes_ms, axes_oir)):
         for ax in (ax_ms, ax_oir):
-            ax.set_xlim(-0.5, base_image.shape[1] - 0.5)
-            ax.set_ylim(-0.5, base_image.shape[0] - 0.5)
-            ax.imshow(np.log10(base_image),
-                      cmap=mpl.cm.gray_r, vmin=-2., vmax=-1,
-                      zorder=-10,
-                      origin='lower')
-            ax.set_xlim(500, 3000)
-            ax.set_ylim(2800, 6189)
-            ax.coords[1].set_major_formatter('d.d')
-            ax.coords[0].set_major_formatter('hh:mm')
-            ax.coords[0].set_separator(('h', "'", '"'))
             if i > 0:
                 ax.coords[1].ticklabels.set_visible(False)
         ax_ms.coords[0].ticklabels.set_visible(False)
