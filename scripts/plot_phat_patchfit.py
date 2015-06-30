@@ -19,7 +19,9 @@ import matplotlib.gridspec as gridspec
 from palettable.cubehelix import perceptual_rainbow_16
 
 from androcmd.phatpatchfit import (load_galex_map,
-                                   setup_galex_axes, setup_plane_comp_axes)
+                                   setup_galex_axes, setup_plane_comp_axes,
+                                   marginalize_metallicity,
+                                   get_scaled_sfr_values)
 
 
 def main():
@@ -46,8 +48,14 @@ def main():
     if args.mean_age_map is not None:
         plot_mean_age_map(dataset, args.mean_age_map)
 
+    if args.epoch_sfr_comp_maps is not None:
+        plot_epoch_sfr_comp_maps(dataset, args.epoch_sfr_comp_maps)
+
     if args.epoch_sfr_maps is not None:
-        plot_epoch_sfr_maps(dataset, args.epoch_sfr_maps)
+        for fit_key in ['lewis', 'oir_all']:
+            plot_epoch_sfr_map_vertical(
+                dataset, fit_key,
+                '_'.join((args.epoch_sfr_maps, fit_key, 'vert')))
 
 
 def parse_args():
@@ -60,8 +68,11 @@ def parse_args():
     parser.add_argument('--mean-sfr-map', default=None)
     parser.add_argument('--mean-age-map', default=None)
     parser.add_argument(
-        '--epoch-sfr-maps', default=None,
+        '--epoch-sfr-comp-maps', default=None,
         help='Map comparing SFR at epochs for MS and ALL fits')
+    parser.add_argument(
+        '--epoch-sfr-maps', default=None,
+        help='Map comparing SFR at for MS and ALL, individually')
     return parser.parse_args()
 
 
@@ -218,27 +229,6 @@ def plot_sfh_lines_phi(dataset, plot_path):
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
 
-def marginalize_metallicity(sfh_table):
-    t = np.empty(len(sfh_table), dtype=sfh_table.dtype)
-    sfh_table.read_direct(t, source_sel=None, dest_sel=None)
-    age_vals = np.unique(t['log(age)'])
-    s = np.argsort(age_vals)
-    age_vals = age_vals[s]
-    A = []
-    sfr = []
-    for i, age_val in enumerate(age_vals):
-        tt = t[t['log(age)'] == age_val]
-        bin_sfr = np.sum(tt['sfr'])
-        A.append(age_val)
-        sfr.append(bin_sfr)
-    srt = np.argsort(A)
-    A = np.array(A)
-    sfr = np.array(sfr)
-    A = A[srt]
-    sfr = sfr[srt]
-    return A, sfr
-
-
 def plot_mean_sfr_map(dataset, plot_path):
     """Plot maps of the mean star formation rate in the patches."""
     fig, canvas, ax_ms, ax_oir, ax_cb = setup_plane_comp_axes()
@@ -289,7 +279,7 @@ def plot_mean_age_map(dataset, plot_path):
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
 
-def plot_epoch_sfr_maps(dataset, plot_path):
+def plot_epoch_sfr_comp_maps(dataset, plot_path):
     fit_keys = ['lewis', 'oir_all']
     ages = [100, 250, 500, 1000]  # Myr
 
@@ -318,27 +308,14 @@ def plot_epoch_sfr_maps(dataset, plot_path):
         ax_ms.text(0.0, 1.02, '{0:d} Myr'.format(int(age)),
                    ha='left', va='baseline', transform=ax_ms.transAxes)
 
-        cmap = perceptual_rainbow_16.mpl_colormap
-        normalizer = mpl.colors.Normalize(vmin=0, vmax=5, clip=True)
-
         # Compute the SFR at age for both ACS-MS and OIR-ALL fits
-        patches = dataset['patches']
         mappers = {'lewis': None, 'oir_all': None}
         for fit_key, ax in zip(fit_keys, (ax_ms, ax_oir)):
-            ra = []
-            dec = []
-            log_sfrs = []
-            for patch_name, patch_group in patches.items():
-                sfh_table = patch_group['sfh'][fit_key]
-                # print t.dtype.names
-                logage_tbl, sfr_tbl = marginalize_metallicity(sfh_table)
-                area = patch_group.attrs['area_proj'] \
-                    / np.cos(77.5 * np.pi / 180.) / 1e3 / 1e3  # kpc^2
-                sfr = np.interp(np.log10(age * 1e6), logage_tbl, sfr_tbl)
-                log_sfrs.append(np.log10(sfr / area * 10. ** 3.))
-                ra.append(patch_group.attrs['ra0'])
-                dec.append(patch_group.attrs['dec0'])
-            mapper = ax.scatter(ra, dec, c=log_sfrs,
+            cmap = perceptual_rainbow_16.mpl_colormap
+            normalizer = mpl.colors.Normalize(vmin=0, vmax=5, clip=True)
+            ra, dec, sfr_val = get_scaled_sfr_values(dataset, fit_key,
+                                                     age * 10. ** 6)
+            mapper = ax.scatter(ra, dec, c=sfr_val,
                                 norm=normalizer,
                                 cmap=cmap,
                                 edgecolors='None', s=16,
@@ -352,6 +329,56 @@ def plot_epoch_sfr_maps(dataset, plot_path):
     cbar.set_label(sfr_label)
     cbar = fig.colorbar(mappers['lewis'], cax=ax_cb_ms,
                         orientation='vertical')
+    cbar.set_label(sfr_label)
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_epoch_sfr_map_vertical(dataset, fit_key, plot_path):
+    ages = [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    nx = 4
+    ny = 3
+    assert len(ages) == nx * ny
+
+    basemap = load_galex_map()
+
+    fig = Figure(figsize=(6.5, 6), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(ny, nx + 1,
+                           left=0.07, right=0.9, bottom=0.05, top=0.95,
+                           wspace=0.05, hspace=0.05,
+                           width_ratios=[1] * nx + [0.1],
+                           height_ratios=None)
+    ax_cb = fig.add_subplot(gs[:, nx])
+    axes = {}
+    for i, age in enumerate(ages):
+        iy = i / nx
+        ix = i % nx
+        ax = setup_galex_axes(fig, gs[iy, ix], basemap)
+        if ix > 0:
+            ax.coords[1].ticklabels.set_visible(False)
+        if iy < (ny - 1):
+            ax.coords[0].ticklabels.set_visible(False)
+        axes[age] = ax
+
+    for age, ax in axes.iteritems():
+        cmap = perceptual_rainbow_16.mpl_colormap
+        normalizer = mpl.colors.Normalize(vmin=0, vmax=5, clip=True)
+        ra, dec, sfr_val = get_scaled_sfr_values(dataset, fit_key,
+                                                 age * 10. ** 6)
+        mapper = ax.scatter(ra, dec, c=sfr_val,
+                            norm=normalizer,
+                            cmap=cmap,
+                            edgecolors='None', s=16,
+                            transform=ax.get_transform('world'))
+        ax.text(0.95, 0.95, '{0:d} Myr'.format(int(age)),
+                ha='right', va='top', transform=ax.transAxes)
+
+    sfr_label = r'$\langle \mathrm{SFR} \rangle$ ($\mathrm{M}_\odot' \
+                r'~10^{-3}~\mathrm{yr}^{-1}~\mathrm{kpc}^{-2}$)'
+    cbar = fig.colorbar(mapper,
+                        cax=ax_cb, orientation='vertical')
     cbar.set_label(sfr_label)
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)

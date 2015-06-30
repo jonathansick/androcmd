@@ -46,7 +46,8 @@ def setup_galex_axes(fig, gs_span, basemap):
     ax.set_ylim(2800, 6189)
     ax.coords[1].set_major_formatter('d.d')
     ax.coords[0].set_major_formatter('hh:mm')
-    ax.coords[0].set_separator(('h', "'", '"'))
+    ax.coords[0].set_separator((r'$^h$', "'", '"'))
+    ax.coords[0].ticklabels.set_size(8)
     plot_patch_footprints(ax)
     return ax
 
