@@ -422,7 +422,7 @@ def plot_epoch_sfr_maps(dataset, plot_path):
                    ha='left', va='baseline', transform=ax_ms.transAxes)
 
         cmap = perceptual_rainbow_16.mpl_colormap
-        normalizer = mpl.colors.Normalize(vmin=-4, vmax=0, clip=True)
+        normalizer = mpl.colors.Normalize(vmin=0, vmax=5, clip=True)
 
         # Compute the SFR at age for both ACS-MS and OIR-ALL fits
         patches = dataset['patches']
@@ -438,7 +438,7 @@ def plot_epoch_sfr_maps(dataset, plot_path):
                 area = patch_group.attrs['area_proj'] \
                     / np.cos(77.5 * np.pi / 180.) / 1e3 / 1e3  # kpc^2
                 sfr = np.interp(np.log10(age * 1e6), logage_tbl, sfr_tbl)
-                log_sfrs.append(np.log10(sfr / area))
+                log_sfrs.append(np.log10(sfr / area * 10. ** 3.))
                 ra.append(patch_group.attrs['ra0'])
                 dec.append(patch_group.attrs['dec0'])
             mapper = ax.scatter(ra, dec, c=log_sfrs,
@@ -448,13 +448,14 @@ def plot_epoch_sfr_maps(dataset, plot_path):
                                 transform=ax.get_transform('world'))
             mappers[fit_key] = mapper
 
+    sfr_label = r'$\langle \mathrm{SFR} \rangle$ ($\mathrm{M}_\odot' \
+                r'~10^{-3}~\mathrm{yr}^{-1}~\mathrm{kpc}^{-2}$)'
     cbar = fig.colorbar(mappers['oir_all'],
                         cax=ax_cb_oir, orientation='vertical')
-    cbar.set_label(r'$\langle \mathrm{SFR} \rangle$ ($\mathrm{M}_\odot~\mathrm{yr}^{-1}~\mathrm{kpc}^{-2}$)')  # NOQA
-
+    cbar.set_label(sfr_label)
     cbar = fig.colorbar(mappers['lewis'], cax=ax_cb_ms,
                         orientation='vertical')
-    cbar.set_label(r'$\langle \mathrm{SFR} \rangle$ ($\mathrm{M}_\odot~\mathrm{yr}^{-1}~\mathrm{kpc}^{-2}$)')  # NOQA
+    cbar.set_label(sfr_label)
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
