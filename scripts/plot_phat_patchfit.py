@@ -75,8 +75,8 @@ def plot_radial_sfh_points(dataset, plot_path):
                label='OIR-ALL')
     ax.scatter(R, mean_age_ms, s=3, edgecolors='None', facecolors='dodgerblue',
                label='ACS-MS')
-    ax.set_xlim(0., 30.)
-    ax.set_ylim(0., 14.)
+    ax.set_xlim(0., 25.)
+    ax.set_ylim(0., 12.)
     ax.set_xlabel(r'$R_\mathrm{maj}$ (kpc)')
     ax.set_ylabel(r'$\langle A \rangle$ (Gyr)')
     ax.legend(frameon=True, markerscale=2, ncol=2)
@@ -144,7 +144,7 @@ def plot_sfh_lines(dataset, plot_path):
 
     patches = dataset['patches']
     cmap = perceptual_rainbow_16.mpl_colormap
-    radius_normalizer = mpl.colors.Normalize(vmin=0, vmax=25, clip=True)
+    radius_normalizer = mpl.colors.Normalize(vmin=0, vmax=22, clip=True)
     r_mapper = mpl.cm.ScalarMappable(norm=radius_normalizer, cmap=cmap)
     radii = []
     for patch_name, patch_group in patches.items():
@@ -164,7 +164,7 @@ def plot_sfh_lines(dataset, plot_path):
         ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(base=1))
     for tl in ax_ms.get_xmajorticklabels():
         tl.set_visible(False)
-    ax_oir.set_xlabel(r'$\log(A~\mathrm{Gyr}^{-1})$')
+    ax_oir.set_xlabel(r'$\log(A~\mathrm{yr}^{-1})$')
     ax_ms.text(0.1, 0.9, 'ACS-MS', transform=ax_ms.transAxes)
     ax_oir.text(0.1, 0.9, 'OIR-ALL', transform=ax_oir.transAxes)
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
@@ -208,7 +208,7 @@ def plot_sfh_lines_phi(dataset, plot_path):
         tl.set_visible(False)
     ax_ms.text(0.1, 0.9, 'ACS-MS', transform=ax_ms.transAxes)
     ax_oir.text(0.1, 0.9, 'OIR-ALL', transform=ax_oir.transAxes)
-    ax_oir.set_xlabel(r'$\log(A~\mathrm{Gyr}^{-1})$')
+    ax_oir.set_xlabel(r'$\log(A~\mathrm{yr}^{-1})$')
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
@@ -271,7 +271,7 @@ def plot_mean_age_map(dataset, plot_path):
     dec = dataset['sfh_table']['dec'][:]
 
     cmap = perceptual_rainbow_16.mpl_colormap
-    normalizer = mpl.colors.Normalize(vmin=0, vmax=13.7, clip=True)
+    normalizer = mpl.colors.Normalize(vmin=0, vmax=10, clip=True)
 
     for ax, fit_key in zip([ax_ms, ax_oir], ['lewis', 'oir_all']):
         mean_age = dataset['sfh_table']['mean_age_{0}'.format(fit_key)]
@@ -312,7 +312,8 @@ def create_wcs_axes(ref_path='m31_80.fits'):
         ax.set_xlim(2000, 9500)
         ax.coords[1].set_major_formatter('d.d')
         ax.coords[0].set_major_formatter('hh:mm')
-    ax_oir.coords[1].ticklabels.set_visible(False)
+    # ax_oir.coords[1].ticklabels.set_visible(False)
+    ax_oir.coords[1].set_ticklabel_position('')
     ax_ms.text(0.1, 0.9, 'ACS-MS', transform=ax_ms.transAxes, ha='left',
                zorder=10)
     ax_oir.text(0.1, 0.9, 'OIR-ALL', transform=ax_oir.transAxes, ha='left',
@@ -356,7 +357,7 @@ def create_wcs_axes_galex(ref_path='h_m31-nd-int.fits'):
         for footprint in load_field_footprints():
             patch = mpl.patches.Polygon(footprint, closed=True,
                                         transform=ax.get_transform('world'),
-                                        facecolor='y', alpha=0.1,
+                                        facecolor='None', alpha=0.2,
                                         edgecolor='k', lw=0.5)
             ax.add_patch(patch)
 
