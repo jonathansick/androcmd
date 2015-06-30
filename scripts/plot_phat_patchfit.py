@@ -47,6 +47,9 @@ def main():
     if args.mean_age_map is not None:
         plot_mean_age_map(dataset, args.mean_age_map)
 
+    if args.epoch_sfr_maps is not None:
+        plot_epoch_sfr_maps(dataset, args.epoch_sfr_maps)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -57,6 +60,9 @@ def parse_args():
     parser.add_argument('--sfh-lines', default=None)
     parser.add_argument('--mean-sfr-map', default=None)
     parser.add_argument('--mean-age-map', default=None)
+    parser.add_argument(
+        '--epoch-sfr-maps', default=None,
+        help='Map comparing SFR at epochs for MS and ALL fits')
     return parser.parse_args()
 
 
@@ -368,6 +374,90 @@ def create_wcs_axes_galex(ref_path='h_m31-nd-int.fits'):
                 zorder=10)
 
     return fig, canvas, ax_ms, ax_oir, ax_cb
+
+
+def plot_epoch_sfr_maps(dataset, plot_path):
+    fit_keys = ['lewis', 'oir_all']
+    ages = [100, 250, 500, 1000]  # Myr
+
+    # Load basemap for coordinates
+    ref_path = 'h_m31-nd-int.fits'
+    with astropy.io.fits.open(ref_path) as f:
+        header = f[0].header
+        base_image = f[0].data
+        wcs = wcsaxes.WCS(header)
+
+    fig = Figure(figsize=(6, 8), frameon=False)
+    canvas = FigureCanvas(fig)
+    ny = len(ages)
+    gs = gridspec.GridSpec(ny + 1, 2,
+                           left=0.15, right=0.95, bottom=0.15, top=0.95,
+                           wspace=0.05, hspace=0.05,
+                           width_ratios=None, height_ratios=(0.1, 1, 1, 1, 1))
+    axes_ms = [fig.add_subplot(gs[i + 1, 0], projection=wcs)
+               for i in range(ny)]
+    axes_oir = [fig.add_subplot(gs[i + 1, 1], projection=wcs)
+                for i in range(ny)]
+    ax_cb_oir = fig.add_subplot(gs[0, 1])
+    ax_cb_ms = fig.add_subplot(gs[0, 0])
+
+    for i, (age, ax_ms, ax_oir) in enumerate(zip(ages, axes_ms, axes_oir)):
+        for ax in (ax_ms, ax_oir):
+            ax.set_xlim(-0.5, base_image.shape[1] - 0.5)
+            ax.set_ylim(-0.5, base_image.shape[0] - 0.5)
+            ax.imshow(np.log10(base_image),
+                      cmap=mpl.cm.gray_r, vmin=-2., vmax=-1,
+                      zorder=-10,
+                      origin='lower')
+            ax.set_xlim(500, 3000)
+            ax.set_ylim(2800, 6189)
+            ax.coords[1].set_major_formatter('d.d')
+            ax.coords[0].set_major_formatter('hh:mm')
+            ax.coords[0].set_separator(('h', "'", '"'))
+            if i < ny - 1:
+                ax.coords[0].ticklabels.set_visible(False)
+        ax_oir.coords[1].ticklabels.set_visible(False)
+
+        cmap = perceptual_rainbow_16.mpl_colormap
+        normalizer = mpl.colors.Normalize(vmin=-4, vmax=0, clip=True)
+
+        # Compute the SFR at age for both ACS-MS and OIR-ALL fits
+        patches = dataset['patches']
+        mappers = {'lewis': None, 'oir_all': None}
+        for fit_key, ax in zip(fit_keys, (ax_ms, ax_oir)):
+            ra = []
+            dec = []
+            log_sfrs = []
+            for patch_name, patch_group in patches.items():
+                sfh_table = patch_group['sfh'][fit_key]
+                # print t.dtype.names
+                # TODO interpolate SFR at this age
+                # TODO divide by deprojected area in kpc^2
+                logage_tbl, sfr_tbl = marginalize_metallicity(sfh_table)
+                area = patch_group.attrs['area_proj'] \
+                    / np.cos(77.5 * np.pi / 180.) / 1e3 / 1e3  # kpc^2
+                sfr = np.interp(np.log10(age * 1e6), logage_tbl, sfr_tbl)
+                log_sfrs.append(np.log10(sfr / area))
+                ra.append(patch_group.attrs['ra0'])
+                dec.append(patch_group.attrs['dec0'])
+            print log_sfrs
+            mapper = ax.scatter(ra, dec, c=log_sfrs,
+                                norm=normalizer,
+                                cmap=cmap,
+                                edgecolors='None', s=16,
+                                transform=ax.get_transform('world'))
+            mappers[fit_key] = mapper
+
+    cbar = fig.colorbar(mappers['oir_all'],
+                        cax=ax_cb_oir, orientation='horizontal')
+    cbar.set_label(r'$\langle \mathrm{SFR} \rangle$')
+
+    cbar = fig.colorbar(mappers['lewis'], cax=ax_cb_ms,
+                        orientation='horizontal')
+    cbar.set_label(r'$\langle \mathrm{SFR} \rangle$')
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
 
 
 if __name__ == '__main__':
