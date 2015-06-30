@@ -173,14 +173,15 @@ def plot_mean_age_map(dataset, plot_path):
 
 
 def plot_epoch_sfr_map_vertical(dataset, fit_key, plot_path):
-    ages = [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+    ages = [10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
+            2000, 3000, 4000, 5000]
     nx = 4
-    ny = 3
+    ny = 4
     assert len(ages) == nx * ny
 
     basemap = load_galex_map()
 
-    fig = Figure(figsize=(6.5, 6), frameon=False)
+    fig = Figure(figsize=(6.5, 8), frameon=False)
     canvas = FigureCanvas(fig)
     gs = gridspec.GridSpec(ny, nx + 1,
                            left=0.07, right=0.9, bottom=0.05, top=0.95,
