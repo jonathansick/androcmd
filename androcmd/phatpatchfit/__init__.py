@@ -13,4 +13,4 @@ from .pipeline import (PatchFitPlanes, LewisPatchDust, AutoPhatCrowding,
 from .analysistools import marginalize_metallicity
 from .galexmap import load_galex_map, setup_galex_axes
 from .planecompmaps import setup_plane_comp_axes
-from .sfrplots import get_scaled_sfr_values
+from .sfrplots import get_scaled_sfr_values, scale_sfr, SFR_LABEL

@@ -18,7 +18,7 @@ def setup_plane_comp_axes():
     fig = Figure(figsize=(6, 3.5), frameon=False)
     canvas = FigureCanvas(fig)
     gs = gridspec.GridSpec(1, 3,
-                           left=0.08, right=0.85, bottom=0.15, top=0.95,
+                           left=0.08, right=0.9, bottom=0.1, top=0.95,
                            wspace=0.05, hspace=None,
                            width_ratios=(1, 1, 0.08), height_ratios=None)
 
@@ -30,9 +30,11 @@ def setup_plane_comp_axes():
         ax.coords[1].set_major_formatter('d.d')
         ax.coords[0].set_major_formatter('hh:mm')
     ax_oir.coords[1].ticklabels.set_visible(False)
-    ax_ms.text(0.1, 0.9, 'ACS-MS', transform=ax_ms.transAxes, ha='left',
+    ax_ms.text(0.9, 0.9, 'ACS-MS', transform=ax_ms.transAxes,
+               ha='right', va='top',
                zorder=10)
-    ax_oir.text(0.1, 0.9, 'OIR-ALL', transform=ax_oir.transAxes, ha='left',
+    ax_oir.text(0.9, 0.9, 'OIR-ALL', transform=ax_oir.transAxes,
+                ha='right', va='top',
                 zorder=10)
 
     return fig, canvas, ax_ms, ax_oir, ax_cb
