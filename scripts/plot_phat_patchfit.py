@@ -387,19 +387,19 @@ def plot_epoch_sfr_maps(dataset, plot_path):
         base_image = f[0].data
         wcs = wcsaxes.WCS(header)
 
-    fig = Figure(figsize=(6, 8), frameon=False)
+    fig = Figure(figsize=(9, 5), frameon=False)
     canvas = FigureCanvas(fig)
-    ny = len(ages)
-    gs = gridspec.GridSpec(ny + 1, 2,
-                           left=0.15, right=0.95, bottom=0.15, top=0.95,
+    nfig = len(ages)
+    gs = gridspec.GridSpec(2, nfig + 1,
+                           left=0.05, right=0.9, bottom=0.15, top=0.95,
                            wspace=0.05, hspace=0.05,
-                           width_ratios=None, height_ratios=(0.1, 1, 1, 1, 1))
-    axes_ms = [fig.add_subplot(gs[i + 1, 0], projection=wcs)
-               for i in range(ny)]
-    axes_oir = [fig.add_subplot(gs[i + 1, 1], projection=wcs)
-                for i in range(ny)]
-    ax_cb_oir = fig.add_subplot(gs[0, 1])
-    ax_cb_ms = fig.add_subplot(gs[0, 0])
+                           width_ratios=(1, 1, 1, 1, 0.1), height_ratios=None)
+    axes_ms = [fig.add_subplot(gs[0, i], projection=wcs)
+               for i in range(nfig)]
+    axes_oir = [fig.add_subplot(gs[1, i], projection=wcs)
+                for i in range(nfig)]
+    ax_cb_oir = fig.add_subplot(gs[1, nfig])
+    ax_cb_ms = fig.add_subplot(gs[0, nfig])
 
     for i, (age, ax_ms, ax_oir) in enumerate(zip(ages, axes_ms, axes_oir)):
         for ax in (ax_ms, ax_oir):
@@ -414,9 +414,12 @@ def plot_epoch_sfr_maps(dataset, plot_path):
             ax.coords[1].set_major_formatter('d.d')
             ax.coords[0].set_major_formatter('hh:mm')
             ax.coords[0].set_separator(('h', "'", '"'))
-            if i < ny - 1:
-                ax.coords[0].ticklabels.set_visible(False)
-        ax_oir.coords[1].ticklabels.set_visible(False)
+            if i > 0:
+                ax.coords[1].ticklabels.set_visible(False)
+        ax_ms.coords[0].ticklabels.set_visible(False)
+
+        ax_ms.text(0.0, 1.02, '{0:d} Myr'.format(int(age)),
+                   ha='left', va='baseline', transform=ax_ms.transAxes)
 
         cmap = perceptual_rainbow_16.mpl_colormap
         normalizer = mpl.colors.Normalize(vmin=-4, vmax=0, clip=True)
@@ -431,8 +434,6 @@ def plot_epoch_sfr_maps(dataset, plot_path):
             for patch_name, patch_group in patches.items():
                 sfh_table = patch_group['sfh'][fit_key]
                 # print t.dtype.names
-                # TODO interpolate SFR at this age
-                # TODO divide by deprojected area in kpc^2
                 logage_tbl, sfr_tbl = marginalize_metallicity(sfh_table)
                 area = patch_group.attrs['area_proj'] \
                     / np.cos(77.5 * np.pi / 180.) / 1e3 / 1e3  # kpc^2
@@ -440,7 +441,6 @@ def plot_epoch_sfr_maps(dataset, plot_path):
                 log_sfrs.append(np.log10(sfr / area))
                 ra.append(patch_group.attrs['ra0'])
                 dec.append(patch_group.attrs['dec0'])
-            print log_sfrs
             mapper = ax.scatter(ra, dec, c=log_sfrs,
                                 norm=normalizer,
                                 cmap=cmap,
@@ -449,12 +449,12 @@ def plot_epoch_sfr_maps(dataset, plot_path):
             mappers[fit_key] = mapper
 
     cbar = fig.colorbar(mappers['oir_all'],
-                        cax=ax_cb_oir, orientation='horizontal')
-    cbar.set_label(r'$\langle \mathrm{SFR} \rangle$')
+                        cax=ax_cb_oir, orientation='vertical')
+    cbar.set_label(r'$\langle \mathrm{SFR} \rangle$ ($\mathrm{M}_\odot~\mathrm{yr}^{-1}~\mathrm{kpc}^{-2}$)')  # NOQA
 
     cbar = fig.colorbar(mappers['lewis'], cax=ax_cb_ms,
-                        orientation='horizontal')
-    cbar.set_label(r'$\langle \mathrm{SFR} \rangle$')
+                        orientation='vertical')
+    cbar.set_label(r'$\langle \mathrm{SFR} \rangle$ ($\mathrm{M}_\odot~\mathrm{yr}^{-1}~\mathrm{kpc}^{-2}$)')  # NOQA
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
