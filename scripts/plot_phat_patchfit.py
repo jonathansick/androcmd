@@ -136,7 +136,7 @@ def plot_sfh_lines(dataset, plot_path):
                     c=r_mapper.to_rgba(r_kpc, alpha=0.5))
     r_mapper.set_array(np.array(radii))
     cbar = fig.colorbar(r_mapper, cax=ax_cb, orientation='vertical')
-    cbar.set_label(r'$R_\mathrm{maj}$')
+    cbar.set_label(r'$R_\mathrm{maj}~(\mathrm{kpc})$')
     for ax in (ax_ms, ax_oir):
         ax.set_xlim(6.4, 10.2)
         ax.set_ylabel(SFR_LABEL)
@@ -144,7 +144,7 @@ def plot_sfh_lines(dataset, plot_path):
         ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(base=1))
     for tl in ax_ms.get_xmajorticklabels():
         tl.set_visible(False)
-    ax_oir.set_xlabel(r'$\log(A~\mathrm{yr}^{-1})$')
+    ax_oir.set_xlabel(r'$\log_{10}(A~\mathrm{yr}^{-1})$')
     ax_ms.text(0.1, 0.9, 'ACS-MS', transform=ax_ms.transAxes)
     ax_oir.text(0.1, 0.9, 'OIR-ALL', transform=ax_oir.transAxes)
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
@@ -181,10 +181,10 @@ def plot_epoch_sfr_map_vertical(dataset, fit_key, plot_path):
 
     basemap = load_galex_map()
 
-    fig = Figure(figsize=(6.5, 8), frameon=False)
+    fig = Figure(figsize=(6.5, 7.5), frameon=False)
     canvas = FigureCanvas(fig)
     gs = gridspec.GridSpec(ny, nx + 1,
-                           left=0.07, right=0.9, bottom=0.05, top=0.95,
+                           left=0.07, right=0.9, bottom=0.05, top=0.98,
                            wspace=0.05, hspace=0.05,
                            width_ratios=[1] * nx + [0.1],
                            height_ratios=None)

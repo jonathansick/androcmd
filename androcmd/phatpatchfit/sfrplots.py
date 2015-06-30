@@ -10,8 +10,8 @@ import numpy as np
 from .analysistools import marginalize_metallicity
 
 
-SFR_LABEL = r'$\langle \mathrm{SFR} \rangle$ ($\mathrm{M}_\odot' \
-            r'~10^{-3}~\mathrm{yr}^{-1}~\mathrm{kpc}^{-2}$)'
+SFR_LABEL = r'$\langle \log_{10} \Sigma_\mathrm{SFR} \rangle \times 10^{-3}~'\
+            r'(\mathrm{M}_\odot~\mathrm{yr}^{-1}~\mathrm{kpc}^{-2}$)'
 
 
 def get_scaled_sfr_values(dataset, fit_key, age):
