@@ -11,3 +11,4 @@ from .pipeline import (PatchFitPlanes, LewisPatchDust, AutoPhatCrowding,
                        galaxy_coords, load_brick_footprints,
                        load_field_patches, load_field_footprints)
 from .galexmap import load_galex_map, setup_galex_axes
+from .planecompmaps import setup_plane_comp_axes

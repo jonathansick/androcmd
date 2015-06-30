@@ -15,6 +15,7 @@ import matplotlib as mpl
 import wcsaxes
 import astropy.io.fits
 
+from .pipeline import load_field_footprints
 
 BaseMap = namedtuple('BaseMap', 'image wcs xlim ylim vmin vmax')
 
@@ -46,4 +47,15 @@ def setup_galex_axes(fig, gs_span, basemap):
     ax.coords[1].set_major_formatter('d.d')
     ax.coords[0].set_major_formatter('hh:mm')
     ax.coords[0].set_separator(('h', "'", '"'))
+    plot_patch_footprints(ax)
     return ax
+
+
+def plot_patch_footprints(ax):
+    # Plot phat footprints
+    for footprint in load_field_footprints():
+        patch = mpl.patches.Polygon(footprint, closed=True,
+                                    transform=ax.get_transform('world'),
+                                    facecolor='None', alpha=0.1,
+                                    edgecolor='k', lw=0.5)
+        ax.add_patch(patch)

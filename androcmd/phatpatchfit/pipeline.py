@@ -450,14 +450,14 @@ def galaxy_coords(coord, glx_ctr, glx_PA, glx_incl, glx_dist):
 
 
 def load_brick_footprints():
-    path = "data/phat_brick_footprints.json"
+    path = "../data/phat_brick_footprints.json"
     assert resource_exists(__name__, path)
     return json.load(resource_stream(__name__, path))
 
 
 def load_field_patches():
     """Load the patch dataset associated with PHAT fields."""
-    path = "data/phat_field_patches.json"
+    path = "../data/phat_field_patches.json"
     assert resource_exists(__name__, path)
     return json.load(resource_stream(__name__, path))
 
