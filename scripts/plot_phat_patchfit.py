@@ -16,6 +16,7 @@ import matplotlib as mpl
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.gridspec as gridspec
+import palettable
 from palettable.cubehelix import perceptual_rainbow_16
 
 from androcmd.phatpatchfit import (load_galex_map,
@@ -231,6 +232,11 @@ def plot_epoch_sfr_map_vertical(dataset, fit_key, plot_path):
 def plot_major_ax_sfr(dataset, plot_path):
     age_spans = [(0, 25), (25, 50), (50, 79), (79, 100), (100, 158),
                  (158, 200), (200, 251), (251, 316), (316, 398), (0, 400)]
+    palette = palettable.cubehelix.Cubehelix.make(
+        start_hue=240., end_hue=-300., min_sat=1., max_sat=2.5,
+        min_light=0.3, max_light=0.8, gamma=.9, n=len(age_spans) - 1)
+    colors = list(palette.mpl_colors) + ['k']
+    labels = ['{0} - {1} Myr'.format(*a) for a in age_spans] + ['400 Myr Mean']
 
     basemap = load_galex_map()
     fig = Figure(figsize=(6.5, 3.0), frameon=False)
@@ -244,13 +250,13 @@ def plot_major_ax_sfr(dataset, plot_path):
     for ax in (ax_ms, ax_oir):
         ax.set_xlabel(r'$R_\mathrm{maj}~(\mathrm{kpc})$')
         ax.set_xlim(0, 20.)
-        ax.set_ylim(0, 5.)
+        ax.set_ylim(-2, 4)
     ax_ms.set_ylabel(SFR_LABEL)
     for tl in ax_oir.get_ymajorticklabels():
         tl.set_visible(False)
-    ax_ms.text(0.1, 0.9, 'ACS-MS', ha='left', va='top',
+    ax_ms.text(0.9, 0.9, 'ACS-MS', ha='right', va='top',
                transform=ax_ms.transAxes)
-    ax_oir.text(0.1, 0.9, 'OIR-ALL', ha='left', va='top',
+    ax_oir.text(0.9, 0.9, 'OIR-ALL', ha='right', va='top',
                 transform=ax_oir.transAxes)
 
     ax_map = setup_galex_axes(fig, gs[2], basemap)
@@ -263,11 +269,13 @@ def plot_major_ax_sfr(dataset, plot_path):
     r_grid, binned_patches = majoraxplot.bin_patches_radially(dataset,
                                                               patch_keys)
     for fit_key, ax in zip(('lewis', 'oir_all'), (ax_ms, ax_oir)):
-        for age_min, age_max in age_spans:
+        for (age_min, age_max), c, label in zip(age_spans, colors, labels):
             sfr = [majoraxplot.compute_sfr_in_span(dataset, patches, fit_key,
                                                    age_min, age_max)
                    for patches in binned_patches]
-            ax.plot(r_grid, sfr)
+            ax.plot(r_grid, sfr, c=c, label=label)
+
+    ax_oir.legend(loc='lower left', frameon=False, ncol=2, fontsize=6)
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
