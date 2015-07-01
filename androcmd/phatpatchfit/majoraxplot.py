@@ -8,6 +8,8 @@ Tools for plotting SFR along the major axis.
 import matplotlib as mpl
 import numpy as np
 
+from .analysistools import marginalize_metallicity
+
 
 def select_patches(dataset):
     """Patch keys that lie along the major axis."""
@@ -44,3 +46,22 @@ def plot_highlighted_patches(dataset, patch_keys, ax):
                                     facecolor='y', alpha=0.5,
                                     edgecolor='k', lw=0.5)
         ax.add_patch(patch)
+
+
+def compute_sfr_in_span(dataset, patch_keys, fit_key, myr_min, myr_max):
+    """Compute the mean SFR of all patches in a bin within a time span (in Myr)
+    """
+    patch_sfrs = []
+    for k in patch_keys:
+        logage, sfr = marginalize_metallicity(dataset['patches'][k], fit_key)
+        a_myr = 10. ** (logage - 6)
+        interp_ages = np.linspace(myr_min, myr_max, 50)
+        interp_sfrs = np.interp(interp_ages, a_myr, sfr)
+        mean_sfr = np.mean(interp_sfrs)
+        patch_sfrs.append(mean_sfr)
+    patch_sfrs = np.array(patch_sfrs)
+    if len(patch_sfrs) == 0:
+        return None
+    else:
+        mean_sfr = patch_sfrs.mean()
+        return mean_sfr
