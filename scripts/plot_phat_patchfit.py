@@ -23,7 +23,9 @@ from androcmd.phatpatchfit import (load_galex_map,
                                    marginalize_metallicity,
                                    get_scaled_sfr_values,
                                    scale_sfr,
-                                   SFR_LABEL)
+                                   SFR_LABEL,
+                                   plot_patch_footprints)
+import androcmd.phatpatchfit.majoraxplot as majoraxplot
 
 
 def main():
@@ -49,6 +51,9 @@ def main():
                 dataset, fit_key,
                 '_'.join((args.epoch_sfr_maps, fit_key, 'vert')))
 
+    if args.major_ax_sfr is not None:
+        plot_major_ax_sfr(dataset, args.major_ax_sfr)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -60,6 +65,8 @@ def parse_args():
     parser.add_argument(
         '--epoch-sfr-maps', default=None,
         help='Map comparing SFR at for MS and ALL, individually')
+    parser.add_argument('--major-ax-sfr', default=None,
+                        help='Emulate Lewis 2015 Fig 6')
     return parser.parse_args()
 
 
@@ -216,6 +223,39 @@ def plot_epoch_sfr_map_vertical(dataset, fit_key, plot_path):
     cbar = fig.colorbar(mapper,
                         cax=ax_cb, orientation='vertical')
     cbar.set_label(SFR_LABEL)
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_major_ax_sfr(dataset, plot_path):
+    basemap = load_galex_map()
+    fig = Figure(figsize=(6.5, 3.0), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 3,
+                           left=0.1, right=0.97, bottom=0.15, top=0.95,
+                           wspace=0.1, hspace=None,
+                           width_ratios=(1, 1, 0.3), height_ratios=None)
+    ax_ms = fig.add_subplot(gs[0])
+    ax_oir = fig.add_subplot(gs[1])
+    for ax in (ax_ms, ax_oir):
+        ax.set_xlabel(r'$R_\mathrm{maj}~(\mathrm{kpc})$')
+        ax.set_xlim(0, 20.)
+        ax.set_ylim(0, 5.)
+    ax_ms.set_ylabel(SFR_LABEL)
+    for tl in ax_oir.get_ymajorticklabels():
+        tl.set_visible(False)
+    ax_ms.text(0.1, 0.9, 'ACS-MS', ha='left', va='top',
+               transform=ax_ms.transAxes)
+    ax_oir.text(0.1, 0.9, 'OIR-ALL', ha='left', va='top',
+                transform=ax_oir.transAxes)
+
+    ax_map = setup_galex_axes(fig, gs[2], basemap)
+    plot_patch_footprints(ax_map)
+    patch_keys = majoraxplot.select_patches(dataset)
+    majoraxplot.plot_highlighted_patches(dataset, patch_keys, ax_map)
+    ax_map.coords[0].ticklabels.set_visible(False)
+    ax_map.coords[1].ticklabels.set_visible(False)
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")

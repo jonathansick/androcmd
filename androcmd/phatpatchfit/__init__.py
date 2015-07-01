@@ -11,6 +11,6 @@ from .pipeline import (PatchFitPlanes, LewisPatchDust, AutoPhatCrowding,
                        galaxy_coords, load_brick_footprints,
                        load_field_patches, load_field_footprints)
 from .analysistools import marginalize_metallicity
-from .galexmap import load_galex_map, setup_galex_axes
+from .galexmap import load_galex_map, setup_galex_axes, plot_patch_footprints
 from .planecompmaps import setup_plane_comp_axes
 from .sfrplots import get_scaled_sfr_values, scale_sfr, SFR_LABEL
