@@ -229,6 +229,9 @@ def plot_epoch_sfr_map_vertical(dataset, fit_key, plot_path):
 
 
 def plot_major_ax_sfr(dataset, plot_path):
+    age_spans = [(0, 25), (25, 50), (50, 79), (79, 100), (100, 158),
+                 (158, 200), (200, 251), (251, 316), (316, 398), (0, 400)]
+
     basemap = load_galex_map()
     fig = Figure(figsize=(6.5, 3.0), frameon=False)
     canvas = FigureCanvas(fig)
@@ -256,6 +259,15 @@ def plot_major_ax_sfr(dataset, plot_path):
     majoraxplot.plot_highlighted_patches(dataset, patch_keys, ax_map)
     ax_map.coords[0].ticklabels.set_visible(False)
     ax_map.coords[1].ticklabels.set_visible(False)
+
+    r_grid, binned_patches = majoraxplot.bin_patches_radially(dataset,
+                                                              patch_keys)
+    for fit_key, ax in zip(('lewis', 'oir_all'), (ax_ms, ax_oir)):
+        for age_min, age_max in age_spans:
+            sfr = [majoraxplot.compute_sfr_in_span(dataset, patches, fit_key,
+                                                   age_min, age_max)
+                   for patches in binned_patches]
+            ax.plot(r_grid, sfr)
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
