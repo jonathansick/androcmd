@@ -8,6 +8,7 @@ Make a CANFAR queue for patch fitting.
 
 import argparse
 import json
+import h5py
 
 import numpy as np
 from canque import Submission
@@ -19,9 +20,15 @@ def main():
     with open(args.json_patch_path, 'r') as f:
         patch_json = json.load(f)
 
+    if args.existing is not None:
+        dataset = h5py.File(args.existing, 'r')
+    else:
+        dataset = None
+
     patch_numbers = {}
     for brick in args.bricks:
-        patch_numbers[brick] = patch_numbers_for_brick(brick, patch_json)
+        patch_numbers[brick] = patch_numbers_for_brick(brick, patch_json,
+                                                       dataset)
 
     i = 0
     sub = Submission('jonathansick',
@@ -53,17 +60,35 @@ def parse_args():
                         default='phat/patches')
     parser.add_argument('--n', type=int,
                         help='Max number of patches per jobs')
+    parser.add_argument('--existing',
+                        help='HDF5 results file with existing patches to skip',
+                        default=None)
     return parser.parse_args()
 
 
-def patch_numbers_for_brick(brick, patch_json):
+def patch_numbers_for_brick(brick, patch_json, dataset):
     nums = []
     brick_patches = [p for p in patch_json if p['brick'] == brick]
 
     for patch in brick_patches:
         if patch['brick'] == brick:
             nums.append(int(patch['patch'].split('_')[-1]))
+
+    # remove already-computed patches
+    if dataset is not None:
+        existing = set(existing_patches_for_brick(brick, dataset))
+        nums = list(set(nums) - existing)
+
     return nums
+
+
+def existing_patches_for_brick(brick, dataset):
+    patch_numbers = []
+    patches = [k.split('_') for k in dataset['patches'].keys()]
+    for brick_str, patch_str in patches:
+        if int(brick_str) == brick:
+            patch_numbers.append(int(patch_str))
+    return patch_numbers
 
 
 def select_patches(patch_numbers, n_choose):
