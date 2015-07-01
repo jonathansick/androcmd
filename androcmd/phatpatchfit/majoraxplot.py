@@ -21,6 +21,20 @@ def select_patches(dataset):
     return [keys[i] for i in sel]
 
 
+def bin_patches_radially(dataset, patch_keys):
+    r_grid = np.arange(0, 21, 1.)
+    binned_patches = [[] for r in r_grid]
+    patch_r = np.array([dataset['patches'][k].attrs['r_kpc']
+                        for k in patch_keys])
+    for i in xrange(len(r_grid) - 1):
+        rmin = r_grid[i]
+        rmax = r_grid[i + 1]
+        s = np.where((patch_r >= rmin) & (patch_r < rmax))[0]
+        for si in s:
+            binned_patches[i].append(patch_keys[si])
+    return r_grid, binned_patches
+
+
 def plot_highlighted_patches(dataset, patch_keys, ax):
     for key in patch_keys:
         patch = dataset['patches'][key]
