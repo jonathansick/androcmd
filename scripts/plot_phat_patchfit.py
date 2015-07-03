@@ -24,7 +24,7 @@ from androcmd.phatpatchfit import (load_galex_map,
                                    marginalize_metallicity,
                                    get_scaled_sfr_values,
                                    scale_sfr,
-                                   SFR_LABEL,
+                                   SFR_LABEL, LIN_SFR_LABEL,
                                    plot_patch_footprints)
 import androcmd.phatpatchfit.majoraxplot as majoraxplot
 
@@ -54,6 +54,7 @@ def main():
 
     if args.major_ax_sfr is not None:
         plot_major_ax_sfr(dataset, args.major_ax_sfr)
+        plot_major_ax_sfr_linear(dataset, args.major_ax_sfr + '_linear')
 
 
 def parse_args():
@@ -276,6 +277,59 @@ def plot_major_ax_sfr(dataset, plot_path):
             ax.plot(r_grid, sfr, c=c, label=label)
 
     ax_oir.legend(loc='lower left', frameon=False, ncol=2, fontsize=6)
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_major_ax_sfr_linear(dataset, plot_path):
+    age_spans = [(0, 25), (25, 50), (50, 79), (79, 100), (100, 158),
+                 (158, 200), (200, 251), (251, 316), (316, 398), (0, 400)]
+    palette = palettable.cubehelix.Cubehelix.make(
+        start_hue=240., end_hue=-300., min_sat=1., max_sat=2.5,
+        min_light=0.3, max_light=0.8, gamma=.9, n=len(age_spans) - 1)
+    colors = list(palette.mpl_colors) + ['k']
+    labels = ['{0} - {1} Myr'.format(*a) for a in age_spans] + ['400 Myr Mean']
+
+    basemap = load_galex_map()
+    fig = Figure(figsize=(6.5, 3.0), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 3,
+                           left=0.12, right=0.97, bottom=0.15, top=0.95,
+                           wspace=0.1, hspace=None,
+                           width_ratios=(1, 1, 0.3), height_ratios=None)
+    ax_ms = fig.add_subplot(gs[0])
+    ax_oir = fig.add_subplot(gs[1])
+    for ax in (ax_ms, ax_oir):
+        ax.set_xlabel(r'$R_\mathrm{maj}~(\mathrm{kpc})$')
+        ax.set_xlim(0, 20.)
+        ax.set_ylim(-5, 4000)
+    ax_ms.set_ylabel(LIN_SFR_LABEL)
+    for tl in ax_oir.get_ymajorticklabels():
+        tl.set_visible(False)
+    ax_ms.text(0.9, 0.9, 'ACS-MS', ha='right', va='top',
+               transform=ax_ms.transAxes)
+    ax_oir.text(0.9, 0.9, 'OIR-ALL', ha='right', va='top',
+                transform=ax_oir.transAxes)
+
+    ax_map = setup_galex_axes(fig, gs[2], basemap)
+    plot_patch_footprints(ax_map)
+    patch_keys = majoraxplot.select_patches(dataset)
+    majoraxplot.plot_highlighted_patches(dataset, patch_keys, ax_map)
+    ax_map.coords[0].ticklabels.set_visible(False)
+    ax_map.coords[1].ticklabels.set_visible(False)
+
+    r_grid, binned_patches = majoraxplot.bin_patches_radially(dataset,
+                                                              patch_keys)
+    for fit_key, ax in zip(('lewis', 'oir_all'), (ax_ms, ax_oir)):
+        for (age_min, age_max), c, label in zip(age_spans, colors, labels):
+            sfr = [majoraxplot.compute_sfr_in_span(dataset, patches, fit_key,
+                                                   age_min, age_max,
+                                                   lin_scale=True)
+                   for patches in binned_patches]
+            ax.plot(r_grid, sfr, c=c, label=label)
+
+    ax_ms.legend(loc='center left', frameon=False, ncol=2, fontsize=6)
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")

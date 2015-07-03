@@ -9,7 +9,7 @@ import matplotlib as mpl
 import numpy as np
 
 from .analysistools import marginalize_metallicity
-from .sfrplots import scale_sfr
+from .sfrplots import scale_sfr, lin_scale_sfr
 
 
 def select_patches(dataset):
@@ -49,13 +49,17 @@ def plot_highlighted_patches(dataset, patch_keys, ax):
         ax.add_patch(patch)
 
 
-def compute_sfr_in_span(dataset, patch_keys, fit_key, myr_min, myr_max):
+def compute_sfr_in_span(dataset, patch_keys, fit_key, myr_min, myr_max,
+                        lin_scale=False):
     """Compute the mean SFR of all patches in a bin within a time span (in Myr)
     """
     patch_sfrs = []
     for k in patch_keys:
         logage, sfr = marginalize_metallicity(dataset['patches'][k], fit_key)
-        sfr = scale_sfr(sfr, dataset['patches'][k])
+        if lin_scale:
+            sfr = lin_scale_sfr(sfr, dataset['patches'][k])
+        else:
+            sfr = scale_sfr(sfr, dataset['patches'][k])
         a_myr = 10. ** (logage - 6)
         interp_ages = np.linspace(myr_min, myr_max, 50)
         interp_sfrs = np.interp(interp_ages, a_myr, sfr)

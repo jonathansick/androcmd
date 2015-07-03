@@ -15,6 +15,11 @@ SFR_LABEL = r'$\langle \log_{10} \Sigma_\mathrm{SFR} \rangle ~'\
             r'~\mathrm{kpc}^{-2}$)'
 
 
+LIN_SFR_LABEL = r'$\langle \Sigma_\mathrm{SFR} \rangle ~'\
+                r'(10^{-3}~\mathrm{M}_\odot~\mathrm{yr}^{-1}'\
+                r'~\mathrm{kpc}^{-2}$)'
+
+
 def get_scaled_sfr_values(dataset, fit_key, age):
     patches = dataset['patches']
 
@@ -35,3 +40,9 @@ def scale_sfr(sfr, patch_group):
     area = patch_group.attrs['area_proj'] \
         / np.cos(77.5 * np.pi / 180.) / 1e3 / 1e3  # kpc^2
     return np.log10(sfr / area * 10. ** 3.)
+
+
+def lin_scale_sfr(sfr, patch_group):
+    area = patch_group.attrs['area_proj'] \
+        / np.cos(77.5 * np.pi / 180.) / 1e3 / 1e3  # kpc^2
+    return sfr / area * 10. ** 3.
