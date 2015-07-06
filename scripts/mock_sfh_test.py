@@ -8,10 +8,12 @@ Run mock star formation history fitting tests.
 
 import json
 import argparse
+from functools import partial
 
 import numpy as np
 
-from androcmd.mocksfh.pipeline import RealErrorsThreeZPipeline
+from androcmd.mocksfh.pipeline import (RealErrorsThreeZPipeline,
+                                       IdealizedThreeZPipeline)
 from androcmd.mocksfh.pipeline import MockFit
 
 
@@ -66,26 +68,31 @@ def parse_args():
     return parser.parse_args()
 
 
-def ssp_100myr_solar(lockfile):
+def ssp_solar(lockfile, age_myr=100):
     ages = 10 ** (lockfile.group_logages - 6.)
     Zs = lockfile.group_metallicities
     n_groups = len(ages)
 
     # select the single group that matches the description
-    i = np.argmin(np.hypot(ages - 100., Zs - 0.019))
+    i = np.argmin(np.hypot(ages - age_myr, Zs - 0.019))
 
     sfhs = np.zeros(n_groups, dtype=np.float)
     sfhs[i] = 1.
     return sfhs
 
 
-SFH_FACTORIES = {
-    'ssp_100myr_solar': ssp_100myr_solar,
-}
+SFH_FACTORIES = dict()
+for myr in (100, 250, 500):
+    key = 'ssp_{0:d}myr_solar'.format(myr)
+    SFH_FACTORIES[key] = partial(ssp_solar, age_myr=myr)
+for gyr in range(1, 13):
+    key = 'ssp_{0:d}gyr_solar'.format(gyr)
+    SFH_FACTORIES[key] = partial(ssp_solar, age_myr=gyr * 1e3)
 
 
 PIPELINES = {
     'realistic': RealErrorsThreeZPipeline,
+    'ideal': IdealizedThreeZPipeline,
 }
 
 
