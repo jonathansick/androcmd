@@ -33,7 +33,7 @@ class MockFit(object):
     """
     def __init__(self, name, sfh_factory, pipeline, n_star_amp=True):
         super(MockFit, self).__init__()
-        self.n_star_amp
+        self.n_star_amp = n_star_amp
         self.name = name
         self.sfh_factory = sfh_factory
         self.pipeline = pipeline
