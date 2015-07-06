@@ -11,8 +11,7 @@ from collections import OrderedDict, namedtuple
 import h5py
 
 from starfisher.testpop import TestPop
-from starfisher.pipeline import PipelineBase
-from starfisher.pipeline import PlaneBase
+from starfisher.pipeline import PipelineBase, CrowdingBase, PlaneBase
 from starfisher import ColorPlane
 
 from ..planes import make_f475w_f160w, make_lewis_ms
@@ -197,12 +196,8 @@ def make_lewis_ms_32(dpix=0.05, mag_lim=34.):
     return plane
 
 
-class MockPlanes(PlaneBase):
+class DeepMockPlanes(PlaneBase):
     """Color plane set PHAT mock testing.
-
-    Includes the OIR-ALL and ACS-MS planes used for the actual fitting in
-    addition to OIR-ALL and ACS-MS planes that extend further down the
-    luminosity function.
     """
     def __init__(self, **kwargs):
         self._planes = OrderedDict([
@@ -215,6 +210,25 @@ class MockPlanes(PlaneBase):
             ('lewis_30', make_lewis_ms_30()),
             ('lewis_32', make_lewis_ms_32()),
         ])
+        super(DeepMockPlanes, self).__init__(**kwargs)
+
+    @property
+    def planes(self):
+        return self._planes
+
+
+class MockPlanes(PlaneBase):
+    """Color plane set PHAT mock testing.
+
+    Includes the OIR-ALL and ACS-MS planes used for the actual fitting in
+    addition to OIR-ALL and ACS-MS planes that extend further down the
+    luminosity function.
+    """
+    def __init__(self, **kwargs):
+        self._planes = OrderedDict([
+            ('oir_all', make_f475w_f160w()),
+            ('lewis', make_lewis_ms()),
+        ])
         super(MockPlanes, self).__init__(**kwargs)
 
     @property
@@ -226,7 +240,9 @@ class RealErrorsThreeZPipeline(MockPlanes, ExtendedSolarIsocs,
                                ExtendedSolarLockfile, LewisPatchDust,
                                AutoPhatCrowding,
                                PipelineBase):
-    """Pipeline for patch fitting with three metallicity tracks."""
+    """Pipeline for fitting with three metallicity tracks that emulates real
+    fits by using PHAT crowding tables for the mock dataset.
+    """
     def __init__(self, **kwargs):
         # Get patch attributes
         self.patch = kwargs.pop('patch')
@@ -236,3 +252,21 @@ class RealErrorsThreeZPipeline(MockPlanes, ExtendedSolarIsocs,
         self.dec0 = kwargs.pop('dec0')
         self.area = kwargs.pop('area')
         super(RealErrorsThreeZPipeline, self).__init__(**kwargs)
+
+
+class IdealizedThreeZPipeline(DeepMockPlanes, ExtendedSolarIsocs,
+                              ExtendedSolarLockfile, LewisPatchDust,
+                              CrowdingBase,
+                              PipelineBase):
+    """Pipeline for fitting with three metallicity tracks given no crowding
+    errors, and with deep CMD planes.
+    """
+    def __init__(self, **kwargs):
+        # Get patch attributes
+        self.patch = kwargs.pop('patch')
+        self.poly = kwargs.pop('poly')
+        self.brick = kwargs.pop('brick')
+        self.ra0 = kwargs.pop('ra0')
+        self.dec0 = kwargs.pop('dec0')
+        self.area = kwargs.pop('area')
+        super(IdealizedThreeZPipeline, self).__init__(**kwargs)

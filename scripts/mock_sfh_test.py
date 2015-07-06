@@ -41,7 +41,7 @@ def main():
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('name', type=int,
+    parser.add_argument('name',
                         help='Test name')
     parser.add_argument('sfh_name', type=str,
                         choices=SFH_FACTORIES.keys())
