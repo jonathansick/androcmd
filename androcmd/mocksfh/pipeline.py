@@ -6,10 +6,24 @@ Pipeline to create and fit mock CMDs with StarFISH.
 """
 
 import os
+from collections import OrderedDict, namedtuple
 
 import h5py
 
 from starfisher.testpop import TestPop
+from starfisher.pipeline import PipelineBase
+from starfisher.pipeline import PlaneBase
+from starfisher import ColorPlane
+
+from ..planes import make_f475w_f160w, make_lewis_ms
+
+from ..phatpipeline import ExtendedSolarIsocs, ExtendedSolarLockfile
+from ..phatpatchfit.pipeline import LewisPatchDust, AutoPhatCrowding
+# from ..dust import mw_Av, phat_rel_extinction, LewisDustLaw
+
+# from ..planes import make_f475w_f160w, make_lewis_ms
+
+Lim = namedtuple('Lim', 'x y')
 
 
 class MockFit(object):
@@ -103,3 +117,122 @@ class MockFit(object):
         d.attrs['y_label'] = plane.y_label
         d.attrs['dpix'] = plane.dpix
         return d
+
+
+def make_f475w_f160w_28(dpix=0.05, mag_lim=36.):
+    lim = Lim(x=(-0.8, 8.), y=(28., 17.5))
+    plane = ColorPlane(('F475W', 'F160W'), 'F160W',
+                       lim.x,
+                       (min(lim.y), max(lim.y)),
+                       mag_lim,
+                       suffix='oira28',
+                       x_label=r'$\mathrm{F475W}-\mathrm{F160W}$',
+                       y_label=r'$\mathrm{F160W}$',
+                       dpix=dpix)
+    return plane
+
+
+def make_f475w_f160w_30(dpix=0.05, mag_lim=38.):
+    lim = Lim(x=(-0.8, 8.), y=(30., 17.5))
+    plane = ColorPlane(('F475W', 'F160W'), 'F160W',
+                       lim.x,
+                       (min(lim.y), max(lim.y)),
+                       mag_lim,
+                       suffix='oira30',
+                       x_label=r'$\mathrm{F475W}-\mathrm{F160W}$',
+                       y_label=r'$\mathrm{F160W}$',
+                       dpix=dpix)
+    return plane
+
+
+def make_f475w_f160w_32(dpix=0.05, mag_lim=40.):
+    lim = Lim(x=(-0.8, 8.), y=(32., 17.5))
+    plane = ColorPlane(('F475W', 'F160W'), 'F160W',
+                       lim.x,
+                       (min(lim.y), max(lim.y)),
+                       mag_lim,
+                       suffix='oira32',
+                       x_label=r'$\mathrm{F475W}-\mathrm{F160W}$',
+                       y_label=r'$\mathrm{F160W}$',
+                       dpix=dpix)
+    return plane
+
+
+def make_lewis_ms_28(dpix=0.05, mag_lim=30.):
+    lim = Lim(x=(-0.5, 1.), y=(28, 21.))
+    plane = ColorPlane(('F475W', 'F814W'), 'F475W',
+                       lim.x,
+                       (min(lim.y), max(lim.y)),
+                       mag_lim,
+                       suffix='lws28',
+                       x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
+                       y_label=r'$\mathrm{F475W}$',
+                       dpix=dpix)
+    return plane
+
+
+def make_lewis_ms_30(dpix=0.05, mag_lim=32.):
+    lim = Lim(x=(-0.5, 1.), y=(30, 21.))
+    plane = ColorPlane(('F475W', 'F814W'), 'F475W',
+                       lim.x,
+                       (min(lim.y), max(lim.y)),
+                       mag_lim,
+                       suffix='lws30',
+                       x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
+                       y_label=r'$\mathrm{F475W}$',
+                       dpix=dpix)
+    return plane
+
+
+def make_lewis_ms_32(dpix=0.05, mag_lim=34.):
+    lim = Lim(x=(-0.5, 1.), y=(32, 21.))
+    plane = ColorPlane(('F475W', 'F814W'), 'F475W',
+                       lim.x,
+                       (min(lim.y), max(lim.y)),
+                       mag_lim,
+                       suffix='lws30',
+                       x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
+                       y_label=r'$\mathrm{F475W}$',
+                       dpix=dpix)
+    return plane
+
+
+class MockPlanes(PlaneBase):
+    """Color plane set PHAT mock testing.
+
+    Includes the OIR-ALL and ACS-MS planes used for the actual fitting in
+    addition to OIR-ALL and ACS-MS planes that extend further down the
+    luminosity function.
+    """
+    def __init__(self, **kwargs):
+        self._planes = OrderedDict([
+            ('oir_all', make_f475w_f160w()),
+            ('oir_all_28', make_f475w_f160w_28()),
+            ('oir_all_30', make_f475w_f160w_30()),
+            ('oir_all_32', make_f475w_f160w_32()),
+            ('lewis', make_lewis_ms()),
+            ('lewis_28', make_lewis_ms_28()),
+            ('lewis_30', make_lewis_ms_30()),
+            ('lewis_32', make_lewis_ms_32()),
+        ])
+        super(MockPlanes, self).__init__(**kwargs)
+
+    @property
+    def planes(self):
+        return self._planes
+
+
+class RealErrorsThreeZPipeline(MockPlanes, ExtendedSolarIsocs,
+                               ExtendedSolarLockfile, LewisPatchDust,
+                               AutoPhatCrowding,
+                               PipelineBase):
+    """Pipeline for patch fitting with three metallicity tracks."""
+    def __init__(self, **kwargs):
+        # Get patch attributes
+        self.patch = kwargs.pop('patch')
+        self.poly = kwargs.pop('poly')
+        self.brick = kwargs.pop('brick')
+        self.ra0 = kwargs.pop('ra0')
+        self.dec0 = kwargs.pop('dec0')
+        self.area = kwargs.pop('area')
+        super(RealErrorsThreeZPipeline, self).__init__(**kwargs)
