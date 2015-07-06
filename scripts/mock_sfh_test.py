@@ -38,7 +38,7 @@ def main():
 
     mockfit = MockFit(args.name, factory, p, n_star_amp=True)
     mockfit.make_dataset()
-    mockfit.run_fit(args.fit, n_synth_cpu=args.n_synth_cpu)
+    # mockfit.run_fit(args.fit, n_synth_cpu=args.n_synth_cpu)
 
 
 def parse_args():
@@ -73,7 +73,7 @@ def ssp_100myr_solar(lockfile):
     i = np.argmin(np.hypot(ages - 100., Zs - 0.019))
 
     sfhs = np.zeros(n_groups, dtype=np.float)
-    sfhs[i] = 10000
+    sfhs[i] = 1.
     return sfhs
 
 

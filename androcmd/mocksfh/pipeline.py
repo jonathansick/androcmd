@@ -45,7 +45,7 @@ class MockFit(object):
                                 self.pipeline.synth,
                                 sfh_amps,
                                 use_lockfile=True, delta_dmod=0.,
-                                n_stars=10000, fext=1., gamma=-1.35,
+                                n_stars=5000000, fext=1., gamma=-1.35,
                                 fbinary=0.5, n_star_amp=self.n_star_amp)
         self._testpop.run()
         self.dataset = self._testpop.dataset
