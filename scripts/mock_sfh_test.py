@@ -38,7 +38,7 @@ def main():
 
     mockfit = MockFit(args.name, factory, p, n_star_amp=True)
     mockfit.make_dataset()
-    # mockfit.run_fit(args.fit, n_synth_cpu=args.n_synth_cpu)
+    mockfit.run_fit(args.fit, n_synth_cpu=args.n_synth_cpu)
 
 
 def parse_args():
@@ -61,6 +61,8 @@ def parse_args():
     parser.add_argument('--ncpu', type=int, default=4,
                         dest='n_synth_cpu',
                         help='Number of CPUs to run synth with')
+    parser.add_argument('--fit', nargs='*',
+                        help='Names of fitted planes')
     return parser.parse_args()
 
 
