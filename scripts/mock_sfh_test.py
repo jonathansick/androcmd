@@ -29,6 +29,8 @@ def main():
     kwargs.update(patch_info)
     kwargs['isoc_args'] = isoc
     kwargs['root_dir'] = args.name
+    kwargs['synth_config_only'] = True
+    kwargs['synth_config_path'] = 'testpop/synth.txt'
     P = PIPELINES[args.pipeline]
     p = P(**kwargs)
 
@@ -36,7 +38,7 @@ def main():
 
     mockfit = MockFit(args.name, factory, p, n_star_amp=True)
     mockfit.make_dataset()
-    mockfit.run_fit(args.fit)
+    mockfit.run_fit(args.fit, n_synth_cpu=args.n_synth_cpu)
 
 
 def parse_args():
@@ -56,6 +58,9 @@ def parse_args():
     parser.add_argument('--json', dest='json_patch_path',
                         default='phat_field_patches.json',
                         help='Path to patch JSON file')
+    parser.add_argument('--ncpu', type=int, default=4,
+                        dest='n_synth_cpu',
+                        help='Number of CPUs to run synth with')
     return parser.parse_args()
 
 

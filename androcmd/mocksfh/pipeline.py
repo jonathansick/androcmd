@@ -50,7 +50,10 @@ class MockFit(object):
         self._testpop.run()
         self.dataset = self._testpop.dataset
 
-    def run_fit(self, fit_keys):
+    def run_fit(self, fit_keys, n_synth_cpu=1):
+        # Ensure synth planes are prepared
+        self.pipeline.run_synth(n_cpu=n_synth_cpu)
+
         for fit_key in fit_keys:
             self.pipeline.fit(fit_key, [fit_key], self.dataset)
 
