@@ -8,8 +8,6 @@ Pipeline to create and fit mock CMDs with StarFISH.
 import os
 from collections import OrderedDict, namedtuple
 
-import h5py
-
 from starfisher.testpop import TestPop
 from starfisher.pipeline import PipelineBase, CrowdingBase, PlaneBase
 from starfisher import ColorPlane
@@ -50,26 +48,20 @@ class MockFit(object):
         self._testpop.run()
         self.dataset = self._testpop.dataset
 
-    def run_fit(self, fit_keys, n_synth_cpu=1):
-        # Ensure synth planes are prepared
-        self.pipeline.run_synth(n_cpu=n_synth_cpu)
+    def run_fit(self, fit_keys, index, n_synth_cpu=1):
+        # We assume that the pipeline already generated synth planes
+        self.fit_keys = fit_keys
+        for fit_key in self.fit_keys:
+            self.pipeline.fit(fit_key, [fit_key], self.dataset,
+                              fit_dir=os.path.join(self.name,
+                                                   fit_key + str(index)))
 
-        for fit_key in fit_keys:
-            self.pipeline.fit(fit_key, [fit_key], self.dataset)
-
-        # Output datafile
-        h5path = os.path.join(os.getenv('STARFISH'), self.pipeline.root_dir,
-                              '{0}.hdf5'.format(self.name))
-        hdf5 = h5py.File(h5path, mode='w')
-
+    def persist_fit_to_hdf5(self, group):
         # Get the SFH table, making an HDF5 group
-        self._reduce_sfh_tables(hdf5, fit_keys)
+        self._reduce_sfh_tables(group, self.fit_keys)
 
         # Get the Hess plane of the fits
-        self._reduce_fitted_hess_planes(hdf5, fit_keys)
-
-        # Save and upload hdf5 file
-        hdf5.flush()
+        self._reduce_fitted_hess_planes(group, self.fit_keys)
 
     def _reduce_sfh_tables(self, hdf5, fit_keys):
         grp = hdf5.create_group('sfh')

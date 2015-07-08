@@ -6,11 +6,14 @@ Run mock star formation history fitting tests.
 2015-07-04 - Created by Jonathan Sick
 """
 
+import os
 import json
 import argparse
 from functools import partial
+from multiprocessing import Pool
 
 import numpy as np
+import h5py
 
 from androcmd.mocksfh.pipeline import (RealErrorsThreeZPipeline,
                                        IdealizedThreeZPipeline)
@@ -25,30 +28,54 @@ def main():
 
     patch_info = get_patch_info(patch_json, args.brick, args.patch)
 
+    # setup the pipeline, including running synth
     isoc = dict(isoc_kind='parsec_CAF09_v1.2S',
                 photsys_version='yang')
     kwargs = {}
     kwargs.update(patch_info)
     kwargs['isoc_args'] = isoc
     kwargs['root_dir'] = args.name
-    kwargs['synth_config_only'] = True
-    kwargs['synth_config_path'] = 'testpop/synth.txt'
+    kwargs['n_synth_cpu'] = args.n_synth_cpu
     P = PIPELINES[args.pipeline]
     p = P(**kwargs)
 
-    factory = SFH_FACTORIES[args.sfh_name]
+    mocks = {}
+    for sfh_name in args.sfh_names:
+        factory = SFH_FACTORIES[sfh_name]
+        mockfit = MockFit(args.name, factory, p, n_star_amp=True)
+        mockfit.make_dataset()
+        mocks[sfh_name] = mockfit
 
-    mockfit = MockFit(args.name, factory, p, n_star_amp=True)
-    mockfit.make_dataset()
-    mockfit.run_fit(args.fit, n_synth_cpu=args.n_synth_cpu)
+    print "Fitting {0:d} star formation histories".format(len(mocks))
+
+    fit_args = []
+    for i, (sfh_name, mockfit) in enumerate(mocks.iteritems()):
+        fit_args.append((sfh_name, mockfit, args.fit, i))
+
+    h5path = os.path.join(os.getenv('STARFISH'), p.root_dir,
+                          '{0}.hdf5'.format(args.name))
+    hdf5 = h5py.File(h5path, mode='w')
+    exp_group = hdf5.require_group('mocksfh')
+
+    pool = Pool()
+    result = pool.map(_run_fit, fit_args)
+    for product in result:
+        sfh_name, mockfit = product
+        sfh_group = exp_group.require_group(sfh_name)
+        mockfit.persist_fit_to_hdf5(sfh_group)
+
+    hdf5.flush()
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('name',
                         help='Test name')
-    parser.add_argument('sfh_name', type=str,
-                        choices=SFH_FACTORIES.keys())
+    parser.add_argument('--sfh',
+                        dest='sfh_names',
+                        type=str, nargs='*',
+                        choices=SFH_FACTORIES.keys(),
+                        default=SFH_FACTORIES.keys())
     parser.add_argument('--pipeline',
                         default='realistic',
                         choices=PIPELINES.keys())
@@ -85,9 +112,9 @@ SFH_FACTORIES = dict()
 for myr in (100, 250, 500):
     key = 'ssp_{0:d}myr_solar'.format(myr)
     SFH_FACTORIES[key] = partial(ssp_solar, age_myr=myr)
-for gyr in range(1, 13):
-    key = 'ssp_{0:d}gyr_solar'.format(gyr)
-    SFH_FACTORIES[key] = partial(ssp_solar, age_myr=gyr * 1e3)
+# for gyr in range(1, 13):
+#     key = 'ssp_{0:d}gyr_solar'.format(gyr)
+#     SFH_FACTORIES[key] = partial(ssp_solar, age_myr=gyr * 1e3)
 
 
 PIPELINES = {
@@ -101,6 +128,12 @@ def get_patch_info(json, brick, patch_num):
     for d in json:
         if d['patch'] == name:
             return d
+
+
+def _run_fit(args):
+    sfh_name, mockfit, fit_keys, index = args
+    mockfit.run_fit(fit_keys, index)
+    return sfh_name, mockfit
 
 
 if __name__ == '__main__':
