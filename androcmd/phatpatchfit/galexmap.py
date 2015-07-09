@@ -43,8 +43,8 @@ def setup_galex_axes(fig, gs_span, basemap):
               zorder=-10,
               origin='lower')
     ax.set_xlim(500, 3000)
-    ax.set_ylim(2800, 6189)
-    ax.coords[1].set_major_formatter('d.d')
+    ax.set_ylim(2600, 5989)
+    ax.coords[1].set_major_formatter('dd:mm')
     ax.coords[0].set_major_formatter('hh:mm')
     ax.coords[0].set_separator((r'$^h$', "'", '"'))
     ax.coords[0].ticklabels.set_size(8)
@@ -52,11 +52,12 @@ def setup_galex_axes(fig, gs_span, basemap):
     return ax
 
 
-def plot_patch_footprints(ax):
-    # Plot phat footprints
+def plot_patch_footprints(ax, **args):
+    patch_args = dict(closed=True,
+                      transform=ax.get_transform('world'),
+                      facecolor='None', alpha=0.1,
+                      edgecolor='k', lw=0.5)
+    patch_args.update(**args)
     for footprint in load_field_footprints():
-        patch = mpl.patches.Polygon(footprint, closed=True,
-                                    transform=ax.get_transform('world'),
-                                    facecolor='None', alpha=0.1,
-                                    edgecolor='k', lw=0.5)
+        patch = mpl.patches.Polygon(footprint, **patch_args)
         ax.add_patch(patch)
