@@ -17,6 +17,10 @@ import matplotlib.gridspec as gridspec
 from matplotlib.patches import Polygon
 from matplotlib.path import Path
 
+from astropy.table import Table
+from astropy import units as u
+from astropy.coordinates import SkyCoord
+
 from m31hst.phatast import load_phat_ast_table
 
 from androcmd.phatpatchfit.galexmap import (load_galex_map, setup_galex_axes,
@@ -30,6 +34,8 @@ def main():
     matches = match_fields(fields, ast_centers)
     print matches
     plot_ast_fields(fields, matches, ast_centers=ast_centers)
+
+    print_ast_table(matches)
 
 
 def load_ast_centers():
@@ -93,6 +99,28 @@ def match_fields(fields, centers):
                          'poly': field['poly']}
                 matches[i + 1] = match
     return matches
+
+
+def print_ast_table(matches):
+    rows = []
+    for i in range(1, 7):
+        m = matches[i]
+        coord = SkyCoord(ra=m['ra'] * u.degree, dec=m['dec'] * u.degree)
+        rows.append((i,
+                     m['brick'],
+                     m['field'],
+                     coord.ra.to_string(unit=u.hour, sep=":"),
+                     coord.dec.to_string(unit=u.degree, sep=":")))
+    t = Table(rows=rows, names=('Number', 'Brick', 'Field', 'R.A.',
+                                'Dec.'))
+    t.write('phat_ast_fields.tex',
+            col_align='lllll',
+            caption=r'\Phat\ artificial star test fields used '
+                    r'for mock testing.',
+            latexdict={'preamble': r'\begin{center}',
+                       'tablefoot': r'\label{tab:phat_ast_fields}'
+                                    r'\end{center}'},
+            format='ascii.latex')
 
 
 if __name__ == '__main__':
