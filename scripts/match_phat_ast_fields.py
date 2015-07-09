@@ -28,6 +28,7 @@ def main():
     fields = load_field_patches()
     ast_centers = load_ast_centers()
     matches = match_fields(fields, ast_centers)
+    print matches
     plot_ast_fields(fields, matches, ast_centers=ast_centers)
 
 
@@ -53,12 +54,21 @@ def plot_ast_fields(fields, matches, ast_centers=None):
     ax = setup_galex_axes(fig, gs[0], basemap)
     plot_patch_footprints(ax, alpha=0.8, edgecolor='dodgerblue')
     for n, m in matches.iteritems():
-        footprint = m['poly']
+        footprint = np.array(m['poly'])
         patch = Polygon(footprint, closed=True,
                         transform=ax.get_transform('world'),
                         facecolor='y', alpha=1,
                         edgecolor='k', lw=0.5, zorder=10)
         ax.add_patch(patch)
+        x = footprint[:, 0].mean()
+        y = footprint[:, 1].mean()
+        ax.annotate('{0:d}'.format(n), xy=(x, y),
+                    xycoords=ax.get_transform('world'),
+                    xytext=(3, -3), textcoords="offset points",
+                    size=8,
+                    bbox=dict(boxstyle="round",
+                              fc=(1., 1., 1., 0.8),
+                              edgecolor='None'))
     if ast_centers is not None:
         ax.scatter(ast_centers[:, 0], ast_centers[:, 1],
                    marker='*', c='y',
