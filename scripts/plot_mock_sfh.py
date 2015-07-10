@@ -19,6 +19,8 @@ import matplotlib.gridspec as gridspec
 
 from palettable.cubehelix import perceptual_rainbow_16
 
+from starfisher.sfhplot import plot_single_sfh_line
+
 
 def main():
     args = parse_args()
@@ -27,6 +29,7 @@ def main():
     hdf5 = h5py.File(h5path, 'r')
 
     plot_hess_planes(hdf5['mocksfh'], dirname)
+    plot_sfhs(hdf5['mocksfh'], dirname)
 
 
 def parse_args():
@@ -34,6 +37,14 @@ def parse_args():
     parser.add_argument('name',
                         help='Test name')
     return parser.parse_args()
+
+
+def plot_sfhs(dataset, base_dir):
+    sfh_list = dataset.keys()
+    for sfh_run in sfh_list:
+        plot_path = os.path.join(base_dir,
+                                 '{0}_sfh'.format(sfh_run))
+        plot_sfh(dataset[sfh_run], plot_path)
 
 
 def plot_hess_planes(dataset, base_dir):
@@ -128,6 +139,26 @@ def _plot_hess(dataset, plane_key, plot_path):
     cb.ax.xaxis.set_ticks_position('top')
     cb.locator = mpl.ticker.MultipleLocator(20)
     cb.update_ticks()
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_sfh(mock_sfh, plot_path):
+    labels = {'lewis': r'ACS-MS', 'oir_all': r'OIR-ALL'}
+    colors = {'lewis': 'dodgerblue', 'oir_all': 'maroon'}
+
+    fig = Figure(figsize=(3.5, 3.5), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 1,
+                           left=0.15, right=0.95, bottom=0.15, top=0.95,
+                           wspace=None, hspace=None,
+                           width_ratios=None, height_ratios=None)
+    ax = fig.add_subplot(gs[0])
+    for plane_key in ['lewis', 'oir_all']:
+        plot_single_sfh_line(ax, mock_sfh['sfh'][plane_key],
+                             label=labels[plane_key],
+                             color=colors[plane_key])
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
