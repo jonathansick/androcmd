@@ -29,7 +29,7 @@ def main():
     hdf5 = h5py.File(h5path, 'r')
 
     plot_hess_planes(hdf5['mocksfh'], dirname)
-    plot_sfhs(hdf5['mocksfh'], dirname)
+    plot_sfhs(hdf5['mocksfh'], hdf5['model_sfh'], dirname)
 
 
 def parse_args():
@@ -39,12 +39,12 @@ def parse_args():
     return parser.parse_args()
 
 
-def plot_sfhs(dataset, base_dir):
+def plot_sfhs(dataset, model_sfh, base_dir):
     sfh_list = dataset.keys()
     for sfh_run in sfh_list:
         plot_path = os.path.join(base_dir,
                                  '{0}_sfh'.format(sfh_run))
-        plot_sfh(dataset[sfh_run], plot_path)
+        plot_sfh(dataset[sfh_run], model_sfh, plot_path)
 
 
 def plot_hess_planes(dataset, base_dir):
@@ -144,7 +144,7 @@ def _plot_hess(dataset, plane_key, plot_path):
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
 
-def plot_sfh(mock_sfh, plot_path):
+def plot_sfh(mock_sfh, model_sfh, plot_path):
     labels = {'lewis': r'ACS-MS', 'oir_all': r'OIR-ALL'}
     colors = {'lewis': 'dodgerblue', 'oir_all': 'maroon'}
 
@@ -159,6 +159,8 @@ def plot_sfh(mock_sfh, plot_path):
         plot_single_sfh_line(ax, mock_sfh['sfh'][plane_key],
                              label=labels[plane_key],
                              color=colors[plane_key])
+
+    plot_single_sfh_line(ax, model_sfh, label='Model', color='k')
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
