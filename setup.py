@@ -45,7 +45,7 @@ setup(
     license='MIT',
     zip_safe=False,
     keywords='androcmd',
-    scripts=glob('scripts/*.py'),
+    scripts=glob('scripts/*.py') + glob('scripts/starfish_magphys/*.py'),
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
