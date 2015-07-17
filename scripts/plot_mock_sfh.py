@@ -29,7 +29,7 @@ def main():
     hdf5 = h5py.File(h5path, 'r')
 
     plot_hess_planes(hdf5['mocksfh'], dirname)
-    plot_sfhs(hdf5['mocksfh'], hdf5['model_sfh'], dirname)
+    plot_sfhs(hdf5['mocksfh'], dirname)
 
 
 def parse_args():
@@ -39,12 +39,12 @@ def parse_args():
     return parser.parse_args()
 
 
-def plot_sfhs(dataset, model_sfh, base_dir):
+def plot_sfhs(dataset, base_dir):
     sfh_list = dataset.keys()
     for sfh_run in sfh_list:
         plot_path = os.path.join(base_dir,
                                  '{0}_sfh'.format(sfh_run))
-        plot_sfh(dataset[sfh_run], model_sfh, plot_path)
+        plot_sfh(dataset[sfh_run], dataset[sfh_run]['model_sfh'], plot_path)
 
 
 def plot_hess_planes(dataset, base_dir):
