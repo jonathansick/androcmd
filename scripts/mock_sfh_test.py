@@ -109,12 +109,9 @@ def ssp_solar(lockfile, age_myr=100):
 
 
 SFH_FACTORIES = dict()
-for myr in (100, 250, 500):
+for myr in (100, 250, 500, 750, 1000, 1500, 2000, 3000):
     key = 'ssp_{0:d}myr_solar'.format(myr)
     SFH_FACTORIES[key] = partial(ssp_solar, age_myr=myr)
-# for gyr in range(1, 13):
-#     key = 'ssp_{0:d}gyr_solar'.format(gyr)
-#     SFH_FACTORIES[key] = partial(ssp_solar, age_myr=gyr * 1e3)
 
 
 PIPELINES = {
