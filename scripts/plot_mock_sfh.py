@@ -161,8 +161,11 @@ def plot_sfh(mock_sfh, model_sfh, plot_path):
                              label=labels[plane_key],
                              color=colors[plane_key])
 
-    plot_single_sfh_line(ax, model_sfh, label='Model', color='k')
-    _plot_mock_sfh(ax, model_sfh)
+    # plot_single_sfh_line(ax, model_sfh, label='Model', color='k')
+    # print model_sfh['sfr']
+    _plot_mock_sfh(ax, model_sfh, lw=1.5, c='k', label='Model')
+
+    ax.legend(loc='lower right', fontsize=8, frameon=True)
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
@@ -170,7 +173,7 @@ def plot_sfh(mock_sfh, model_sfh, plot_path):
 
 def _plot_mock_sfh(ax, table, **kwargs):
     A = table['log(age)']
-    sfr = table['sfr_msolar_yr']
+    sfr = np.log10(table['sfr_msolar_yr'])
     _plot_args = {'drawstyle': 'steps-mid', 'label': 'Model'}
     _plot_args.update(**kwargs)
     ax.plot(A, sfr, **_plot_args)
