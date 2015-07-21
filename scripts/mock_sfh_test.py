@@ -96,6 +96,7 @@ def parse_args():
 
 
 def ssp_solar(lockfile, age_myr=100):
+    """Build a SFR table for this lockfile given an SSP of the given age."""
     ages = 10 ** (lockfile.group_logages - 6.)
     Zs = lockfile.group_metallicities
     n_groups = len(ages)
@@ -109,9 +110,43 @@ def ssp_solar(lockfile, age_myr=100):
 
 
 SFH_FACTORIES = dict()
+
+
 for myr in (100, 250, 500, 750, 1000, 1500, 2000, 3000):
     key = 'ssp_{0:d}myr_solar'.format(myr)
     SFH_FACTORIES[key] = partial(ssp_solar, age_myr=myr)
+
+
+def tau_solar(lockfile, tau=1., tform=10.):
+    """Build a SFR table for this lockfile given a declining exponential SFH.
+    """
+    ages_gyr = 10 ** (lockfile.group_logages - 9.)
+    Zs = lockfile.group_metallicities
+    dt = lockfile.group_dt / 1e9  # time spans for each group, in Gyr
+    n_groups = len(ages_gyr)
+
+    sfhs = np.zeros(n_groups, dtype=np.float)
+    z_values = np.unique(Zs)
+    for Z in z_values:
+        s = np.where(Zs == Z)[0]
+        A = 13.7 - ages_gyr[s]  # Gyr since big bang
+        age_tform = 13.6 - tform  # Gyr since big bang
+        sfr = np.exp(-(A - age_tform) / tau)
+        # Normalize star formation
+        sfr[A < age_tform] = 0.
+        # Assumes each metallicity track has equal number of isochrone groups
+        print "dt.shape", dt.shape
+        print "sfr.shape", sfr.shape
+        print "A.shape", A.shape
+        sfr = sfr / np.sum(sfr * dt[s]) / len(z_values)
+        sfhs[s] = sfr
+
+    return sfhs
+
+
+for tau in (1, 10, 20):
+    key = 'tau_{0:d}_solar'.format(tau)
+    SFH_FACTORIES[key] = partial(tau_solar, tau=tau, tform=10.)
 
 
 PIPELINES = {
