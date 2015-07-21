@@ -54,7 +54,7 @@ def main():
 
     h5path = os.path.join(os.getenv('STARFISH'), p.root_dir,
                           '{0}.hdf5'.format(args.name))
-    hdf5 = h5py.File(h5path, mode='w')
+    hdf5 = h5py.File(h5path, mode='a')
     exp_group = hdf5.require_group('mocksfh')
 
     if args.n_synth_cpu > 1:
