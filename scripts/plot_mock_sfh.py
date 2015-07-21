@@ -44,7 +44,8 @@ def plot_sfhs(dataset, base_dir):
     for sfh_run in sfh_list:
         plot_path = os.path.join(base_dir,
                                  '{0}_sfh'.format(sfh_run))
-        plot_sfh(dataset[sfh_run], dataset[sfh_run]['model_sfh'], plot_path)
+        plot_sfh(dataset[sfh_run], dataset[sfh_run]['model_sfh_marginal'],
+                 plot_path)
 
 
 def plot_hess_planes(dataset, base_dir):
@@ -161,9 +162,18 @@ def plot_sfh(mock_sfh, model_sfh, plot_path):
                              color=colors[plane_key])
 
     plot_single_sfh_line(ax, model_sfh, label='Model', color='k')
+    _plot_mock_sfh(ax, model_sfh)
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def _plot_mock_sfh(ax, table, **kwargs):
+    A = table['log(age)']
+    sfr = table['sfr_msolar_yr']
+    _plot_args = {'drawstyle': 'steps-mid', 'label': 'Model'}
+    _plot_args.update(**kwargs)
+    ax.plot(A, sfr, **_plot_args)
 
 
 if __name__ == '__main__':
