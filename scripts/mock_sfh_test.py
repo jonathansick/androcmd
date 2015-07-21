@@ -57,12 +57,17 @@ def main():
     hdf5 = h5py.File(h5path, mode='w')
     exp_group = hdf5.require_group('mocksfh')
 
-    pool = Pool()
-    result = pool.map(_run_fit, fit_args)
+    if args.n_synth_cpu > 1:
+        pool = Pool()
+        M = pool.map
+    else:
+        M = map
+    result = M(_run_fit, fit_args)
     for product in result:
         sfh_name, mockfit = product
         sfh_group = exp_group.require_group(sfh_name)
         mockfit.persist_fit_to_hdf5(sfh_group)
+        print "Persisted {0} to HDF5".format(sfh_name)
 
     hdf5.flush()
 
