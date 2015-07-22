@@ -65,7 +65,11 @@ def main():
     result = M(_run_fit, fit_args)
     for product in result:
         sfh_name, mockfit = product
-        sfh_group = exp_group.require_group(sfh_name)
+        print sfh_name
+        if sfh_name in exp_group.keys():
+            del exp_group[sfh_name]
+            hdf5.flush()
+        sfh_group = exp_group.create_group(sfh_name)
         mockfit.persist_fit_to_hdf5(sfh_group)
         print "Persisted {0} to HDF5".format(sfh_name)
 

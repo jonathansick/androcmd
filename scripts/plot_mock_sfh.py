@@ -28,19 +28,26 @@ def main():
     h5path = os.path.join(dirname, args.name + '.hdf5')
     hdf5 = h5py.File(h5path, 'r')
 
-    plot_hess_planes(hdf5['mocksfh'], dirname)
-    plot_sfhs(hdf5['mocksfh'], dirname)
+    plot_hess_planes(hdf5['mocksfh'], dirname, sfh_list=args.sfh)
+    plot_sfhs(hdf5['mocksfh'], dirname, sfh_list=args.sfh)
+
+    hdf5.close()
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('name',
                         help='Test name')
+    parser.add_argument('--sfh',
+                        help='optional name of sfh to plot',
+                        default=None,
+                        nargs='*')
     return parser.parse_args()
 
 
-def plot_sfhs(dataset, base_dir):
-    sfh_list = dataset.keys()
+def plot_sfhs(dataset, base_dir, sfh_list=None):
+    if sfh_list is None:
+        sfh_list = dataset.keys()
     for sfh_run in sfh_list:
         plot_path = os.path.join(base_dir,
                                  '{0}_sfh'.format(sfh_run))
@@ -48,10 +55,11 @@ def plot_sfhs(dataset, base_dir):
                  plot_path)
 
 
-def plot_hess_planes(dataset, base_dir):
-    sfh_list = dataset.keys()
+def plot_hess_planes(dataset, base_dir, sfh_list=None):
+    if sfh_list is None:
+        sfh_list = dataset.keys()
     for sfh_run in sfh_list:
-        plane_keys = dataset[sfh_run]['sim_hess'].keys()
+        plane_keys = dataset[sfh_run]['obs_hess'].keys()
         for plane_key in plane_keys:
             plot_path = os.path.join(base_dir,
                                      '{0}_{1}_hess'.format(sfh_run, plane_key))
@@ -66,10 +74,11 @@ def _plot_hess(dataset, plane_key, plot_path):
                            wspace=None, hspace=0.,
                            width_ratios=None, height_ratios=(0.1, 1))
 
-    extent = dataset['sim_hess'][plane_key].attrs['extent']
-    origin = dataset['sim_hess'][plane_key].attrs['origin']
-    y_label = dataset['sim_hess'][plane_key].attrs['y_label']
-    x_label = dataset['sim_hess'][plane_key].attrs['x_label']
+    print "dataset.keys()", dataset.keys()
+    extent = dataset['fit_hess'][plane_key].attrs['extent']
+    origin = dataset['fit_hess'][plane_key].attrs['origin']
+    y_label = dataset['fit_hess'][plane_key].attrs['y_label']
+    x_label = dataset['fit_hess'][plane_key].attrs['x_label']
 
     cube_map = perceptual_rainbow_16.mpl_colormap
 
@@ -103,11 +112,12 @@ def _plot_hess(dataset, plane_key, plot_path):
     cb.update_ticks()
 
     # model
-    h = np.array(dataset['sim_hess'][plane_key][:, :])
+    h = np.array(dataset['fit_hess'][plane_key][:, :])
     print "sim_hess", plot_path, np.nanmin(h), np.nanmax(h)
-    hess = np.log10(dataset['sim_hess'][plane_key])
+    hess = np.log10(dataset['fit_hess'][plane_key])
     hess = np.ma.masked_invalid(hess, copy=True)
-    im = ax_model.imshow(hess, vmin=-6, vmax=-3, **_imshow)
+    # im = ax_model.imshow(hess, vmin=-6, vmax=-3, **_imshow)
+    im = ax_obs.imshow(hess, vmin=0, vmax=3, **_imshow)
     ax_model.set_xlabel(x_label)
     for tl in ax_model.get_ymajorticklabels():
         tl.set_visible(False)

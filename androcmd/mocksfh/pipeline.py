@@ -80,6 +80,7 @@ class MockFit(object):
 
     def _reduce_fitted_hess_planes(self, hdf5, fit_keys):
         sim_group = hdf5.create_group('sim_hess')
+        fit_group = hdf5.create_group('fit_hess')
         obs_group = hdf5.create_group('obs_hess')
         chi_group = hdf5.create_group('chi_hess')
         diff_group = hdf5.create_group('diff_hess')
@@ -87,6 +88,9 @@ class MockFit(object):
         for fit_key in fit_keys:
             sim_hess = self.pipeline.make_sim_hess(fit_key)
             d = self._make_hess_dataset(sim_group, fit_key, sim_hess)
+
+            fit_hess = self.pipeline.make_fit_hess(fit_key, fit_key)
+            d = self._make_hess_dataset(fit_group, fit_key, fit_hess)
 
             obs_hess = self.pipeline.make_obs_hess(self.dataset, fit_key)
             d = self._make_hess_dataset(obs_group, fit_key, obs_hess)
