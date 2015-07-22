@@ -58,7 +58,7 @@ def main():
     exp_group = hdf5.require_group('mocksfh')
 
     if args.n_synth_cpu > 1:
-        pool = Pool()
+        pool = Pool(processes=args.n_synth_cpu)
         M = pool.map
     else:
         M = map
@@ -135,16 +135,14 @@ def tau_solar(lockfile, tau=1., tform=10.):
     for Z in z_values:
         s = np.where(Zs == Z)[0]
         A = 13.7 - ages_gyr[s]  # Gyr since big bang
-        age_tform = 13.6 - tform  # Gyr since big bang
+        age_tform = 13.7 - tform  # Gyr since big bang
         sfr = np.exp(-(A - age_tform) / tau)
         # Normalize star formation
         sfr[A < age_tform] = 0.
-        # Assumes each metallicity track has equal number of isochrone groups
-        print "dt.shape", dt.shape
-        print "sfr.shape", sfr.shape
-        print "A.shape", A.shape
-        sfr = sfr / np.sum(sfr * dt[s]) / len(z_values)
         sfhs[s] = sfr
+
+    # Normalize
+    sfhs = sfhs / np.sum(sfhs * dt)
 
     return sfhs
 
