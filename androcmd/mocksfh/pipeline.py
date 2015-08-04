@@ -63,8 +63,8 @@ class MockFit(object):
         self._reduce_sfh_tables(group, self.fit_keys)
 
         # Add the mock star formation history
-        group.create_dataset('model_sfh', data=self._testpop.sfh_table)
-        group.create_dataset('model_sfh_marginal',
+        group.create_dataset('mock_sfh', data=self._testpop.sfh_table)
+        group.create_dataset('mock_sfh_marginal',
                              data=self._testpop.sfh_table_marginalized)
 
         # Get the Hess plane of the fits
