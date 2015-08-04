@@ -159,7 +159,7 @@ def _plot_hess(dataset, plane_key, plot_path):
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
 
-def plot_sfh(mock_sfh, model_sfh, plot_path):
+def plot_sfh(model_sfh, mock_sfh, plot_path):
     labels = {'lewis': r'ACS-MS', 'oir_all': r'OIR-ALL'}
     colors = {'lewis': 'dodgerblue', 'oir_all': 'maroon'}
 
@@ -171,13 +171,13 @@ def plot_sfh(mock_sfh, model_sfh, plot_path):
                            width_ratios=None, height_ratios=None)
     ax = fig.add_subplot(gs[0])
     for plane_key in ['lewis', 'oir_all']:
-        plot_single_sfh_line(ax, mock_sfh['sfh'][plane_key],
+        plot_single_sfh_line(ax, model_sfh['sfh'][plane_key],
                              label=labels[plane_key],
                              color=colors[plane_key])
 
     # plot_single_sfh_line(ax, model_sfh, label='Model', color='k')
     # print model_sfh['sfr']
-    _plot_mock_sfh(ax, model_sfh, lw=1.5, c='k', label='Model')
+    _plot_mock_sfh(ax, mock_sfh, lw=1.5, c='k', label='Mock')
 
     ax.legend(loc='lower right', fontsize=8, frameon=True)
 
