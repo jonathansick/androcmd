@@ -52,7 +52,7 @@ def plot_sfhs(dataset, base_dir, sfh_list=None):
     for sfh_run in sfh_list:
         plot_path = os.path.join(base_dir,
                                  '{0}_sfh'.format(sfh_run))
-        plot_sfh(dataset[sfh_run], dataset[sfh_run]['model_sfh_marginal'],
+        plot_sfh(dataset[sfh_run], dataset[sfh_run]['mock_sfh_marginal'],
                  plot_path)
 
 
@@ -150,7 +150,7 @@ def _plot_hess(dataset, plane_key, plot_path):
         tl.set_visible(False)
     ax_diff.set_xlabel(x_label)
     cb = fig.colorbar(im, cax=ax_diff_cb, orientation='horizontal')
-    cb.set_label(r"$\Delta_\mathrm{obs-model}$ ($N_*$)")
+    cb.set_label(r"$\Delta_\mathrm{mock-model}$ ($N_*$)")
     cb.ax.xaxis.set_ticks_position('top')
     cb.locator = mpl.ticker.MultipleLocator(20)
     cb.update_ticks()
@@ -171,13 +171,18 @@ def plot_sfh(model_sfh, mock_sfh, plot_path):
                            width_ratios=None, height_ratios=None)
     ax = fig.add_subplot(gs[0])
     for plane_key in ['lewis', 'oir_all']:
+        if plane_key not in model_sfh['sfh'].keys():
+            continue
         plot_single_sfh_line(ax, model_sfh['sfh'][plane_key],
                              label=labels[plane_key],
                              color=colors[plane_key])
+        _plot_mean_age(ax, model_sfh['sfh'][plane_key].attrs['mean_age'],
+                       c=colors[plane_key])
 
     # plot_single_sfh_line(ax, model_sfh, label='Model', color='k')
     # print model_sfh['sfr']
     _plot_mock_sfh(ax, mock_sfh, lw=1.5, c='k', label='Mock')
+    _plot_mean_age(ax, mock_sfh.attrs['mean_age'])
 
     ax.legend(loc='lower right', fontsize=8, frameon=True)
 
@@ -191,6 +196,12 @@ def _plot_mock_sfh(ax, table, **kwargs):
     _plot_args = {'drawstyle': 'steps-mid', 'label': 'Model'}
     _plot_args.update(**kwargs)
     ax.plot(A, sfr, **_plot_args)
+
+
+def _plot_mean_age(ax, mean_age, **axvline_args):
+    _axvline_args = {'lw': 0.8, 'ls': '--', 'c': 'k', 'zorder': 100}
+    _axvline_args.update(axvline_args)
+    ax.axvline(np.log10(mean_age[0]) + 9., **_axvline_args)
 
 
 if __name__ == '__main__':
