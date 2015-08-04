@@ -16,6 +16,8 @@ from ..planes import make_f475w_f160w, make_lewis_ms
 
 from ..phatpipeline import ExtendedSolarIsocs, ExtendedSolarLockfile
 from ..phatpatchfit.pipeline import LewisPatchDust, AutoPhatCrowding
+
+import numpy as np
 # from ..dust import mw_Av, phat_rel_extinction, LewisDustLaw
 
 # from ..planes import make_f475w_f160w, make_lewis_ms
@@ -66,6 +68,9 @@ class MockFit(object):
         group.create_dataset('mock_sfh', data=self._testpop.sfh_table)
         group.create_dataset('mock_sfh_marginal',
                              data=self._testpop.sfh_table_marginalized)
+
+        # self._mock_mean_age_metric(group, 'mock_sfh')  # won't work
+        self._mock_mean_age_metric(group, 'mock_sfh_marginal')
 
         # Get the Hess plane of the fits
         self._reduce_fitted_hess_planes(group, self.fit_keys)
@@ -122,6 +127,22 @@ class MockFit(object):
         d.attrs['y_label'] = plane.y_label
         d.attrs['dpix'] = plane.dpix
         return d
+
+    def _mock_mean_age_metric(self, group, mock_name):
+        """Add mean age to the attributes of the mock_sfh table, to match the
+        data format of a StarFISH fit.
+        """
+        t = np.array(group[mock_name])
+        mass = t['sfr_msolar_yr'] * t['dt']
+
+        age_gyr = 10. ** t['log(age)'] / 1e9
+        m = np.interp(50.,
+                      np.cumsum(mass) / mass.sum() * 100.,
+                      age_gyr)
+        # add mean_age attribute to group
+        # This is a tuple because actual SFH fits will have a second mean age
+        # entry that corresponds to uncertainty.
+        group[mock_name].attrs['mean_age'] = (m, 0.)
 
 
 def make_f475w_f160w_28(dpix=0.05, mag_lim=36.):
