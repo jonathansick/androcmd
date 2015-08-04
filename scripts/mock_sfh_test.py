@@ -151,9 +151,9 @@ def tau_solar(lockfile, tau=1., tform=10.):
     return sfhs
 
 
-for tau in (1, 10, 20):
-    key = 'tau_{0:d}_solar'.format(tau)
-    SFH_FACTORIES[key] = partial(tau_solar, tau=tau, tform=10.)
+for tau in (0.1, 0.5, 1., 5., 10., 20.):
+    key = 'tau_{0:.1f}_solar'.format(tau)
+    SFH_FACTORIES[key] = partial(tau_solar, tau=tau, tform=11.)
 
 
 PIPELINES = {
