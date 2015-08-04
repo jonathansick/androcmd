@@ -18,6 +18,7 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.gridspec as gridspec
 
 from palettable.cubehelix import perceptual_rainbow_16
+from palettable.colorbrewer.diverging import RdBu_11
 
 from starfisher.sfhplot import plot_single_sfh_line
 
@@ -81,6 +82,7 @@ def _plot_hess(dataset, plane_key, plot_path):
     x_label = dataset['fit_hess'][plane_key].attrs['x_label']
 
     cube_map = perceptual_rainbow_16.mpl_colormap
+    div_map = RdBu_11.mpl_colormap
 
     ax_obs = fig.add_subplot(gs[1, 0])
     ax_model = fig.add_subplot(gs[1, 1])
@@ -98,6 +100,8 @@ def _plot_hess(dataset, plane_key, plot_path):
                    extent=extent,
                    origin=origin,
                    alpha=None)
+    _imshow_diff = dict(_imshow)
+    _imshow_diff['cmap'] = div_map
 
     # observations
     hess = np.log10(dataset['obs_hess'][plane_key])
@@ -141,7 +145,7 @@ def _plot_hess(dataset, plane_key, plot_path):
 
     # diff
     hess = np.ma.masked_invalid(dataset['diff_hess'][plane_key], copy=True)
-    im = ax_diff.imshow(hess, vmin=-50, vmax=50, **_imshow)
+    im = ax_diff.imshow(hess, vmin=-50, vmax=50, **_imshow_diff)
     for tl in ax_diff.get_ymajorticklabels():
         tl.set_visible(False)
     ax_diff.set_xlabel(x_label)
