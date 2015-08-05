@@ -116,12 +116,9 @@ def _plot_hess(dataset, plane_key, plot_path):
     cb.update_ticks()
 
     # model
-    h = np.array(dataset['fit_hess'][plane_key][:, :])
-    print "fit_hess", plot_path, np.nanmin(h), np.nanmax(h)
     hess = np.log10(dataset['fit_hess'][plane_key])
     hess = np.ma.masked_invalid(hess, copy=True)
-    # im = ax_model.imshow(hess, vmin=-6, vmax=-3, **_imshow)
-    im = ax_obs.imshow(hess, vmin=0, vmax=6, **_imshow)
+    im = ax_model.imshow(hess, vmin=0, vmax=3, **_imshow)
     ax_model.set_xlabel(x_label)
     for tl in ax_model.get_ymajorticklabels():
         tl.set_visible(False)
