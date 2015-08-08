@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # encoding: utf-8
-'''
+"""
 Plot mock tests made by the mock_sfh_test.py script.
 
 2015-07-09 - Created by Jonathan Sick
-'''
+"""
 
 import os
 import argparse
