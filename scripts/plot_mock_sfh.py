@@ -71,7 +71,7 @@ def _plot_hess(dataset, plane_key, plot_path):
     fig = Figure(figsize=(6.5, 3.5), frameon=False)
     canvas = FigureCanvas(fig)
     gs = gridspec.GridSpec(2, 4,
-                           left=0.07, right=0.95, bottom=0.15, top=0.90,
+                           left=0.1, right=0.97, bottom=0.15, top=0.90,
                            wspace=None, hspace=0.,
                            width_ratios=None, height_ratios=(0.1, 1))
 
@@ -163,7 +163,7 @@ def plot_sfh(model_sfh, mock_sfh, plot_path):
     fig = Figure(figsize=(3.5, 3.5), frameon=False)
     canvas = FigureCanvas(fig)
     gs = gridspec.GridSpec(1, 1,
-                           left=0.15, right=0.95, bottom=0.15, top=0.95,
+                           left=0.18, right=0.95, bottom=0.15, top=0.95,
                            wspace=None, hspace=None,
                            width_ratios=None, height_ratios=None)
     ax = fig.add_subplot(gs[0])
@@ -181,7 +181,7 @@ def plot_sfh(model_sfh, mock_sfh, plot_path):
     _plot_mock_sfh(ax, mock_sfh, lw=1.5, c='k', label='Mock')
     _plot_mean_age(ax, mock_sfh.attrs['mean_age'])
 
-    ax.legend(loc='lower right', fontsize=8, frameon=True)
+    ax.legend(loc='lower left', fontsize=8, frameon=True)
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
