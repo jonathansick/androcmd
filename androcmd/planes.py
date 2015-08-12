@@ -157,7 +157,9 @@ def make_lewis_ms(dpix=0.05, mag_lim=30.):
                        suffix='lws',
                        x_label=r'$\mathrm{F475W}-\mathrm{F814W}$',
                        y_label=r'$\mathrm{F475W}$',
-                       dpix=dpix)
+                       dpix=dpix,
+                       d_xticks=0.5,
+                       d_yticks=1.)
     return plane
 
 

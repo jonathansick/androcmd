@@ -154,7 +154,9 @@ def make_f475w_f160w_28(dpix=0.05, mag_lim=36.):
                        suffix='oira28',
                        x_label=r'$\mathrm{F475W}-\mathrm{F160W}$',
                        y_label=r'$\mathrm{F160W}$',
-                       dpix=dpix)
+                       dpix=dpix,
+                       d_xticks=2.,
+                       d_yticks=1.)
     return plane
 
 
@@ -167,7 +169,9 @@ def make_f475w_f160w_30(dpix=0.05, mag_lim=38.):
                        suffix='oira30',
                        x_label=r'$\mathrm{F475W}-\mathrm{F160W}$',
                        y_label=r'$\mathrm{F160W}$',
-                       dpix=dpix)
+                       dpix=dpix,
+                       d_xticks=2.,
+                       d_yticks=1.)
     return plane
 
 
@@ -180,7 +184,9 @@ def make_f475w_f160w_32(dpix=0.05, mag_lim=40.):
                        suffix='oira32',
                        x_label=r'$\mathrm{F475W}-\mathrm{F160W}$',
                        y_label=r'$\mathrm{F160W}$',
-                       dpix=dpix)
+                       dpix=dpix,
+                       d_xticks=2.,
+                       d_yticks=1.)
     return plane
 
 

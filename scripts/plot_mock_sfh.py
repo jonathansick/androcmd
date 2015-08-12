@@ -71,8 +71,8 @@ def _plot_hess(dataset, plane_key, plot_path):
     fig = Figure(figsize=(6.5, 3.5), frameon=False)
     canvas = FigureCanvas(fig)
     gs = gridspec.GridSpec(2, 4,
-                           left=0.1, right=0.97, bottom=0.15, top=0.90,
-                           wspace=None, hspace=0.,
+                           left=0.08, right=0.97, bottom=0.15, top=0.90,
+                           wspace=0.15, hspace=0.,
                            width_ratios=None, height_ratios=(0.1, 1))
 
     print "dataset.keys()", dataset.keys()
@@ -151,6 +151,21 @@ def _plot_hess(dataset, plane_key, plot_path):
     cb.ax.xaxis.set_ticks_position('top')
     cb.locator = mpl.ticker.MultipleLocator(20)
     cb.update_ticks()
+
+    # Tick hack. Ideally I'd want this data to be embedded in the the HDF5
+    if plane_key == 'lewis':
+        d_xticks = 0.5
+        d_yticks = 1.
+    else:  # OIR-ALL
+        d_xticks = 2.
+        d_yticks = 1.
+    for i, ax in enumerate((ax_obs, ax_model, ax_chi, ax_diff)):
+        ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(base=d_xticks))
+        ax.yaxis.set_major_locator(mpl.ticker.MultipleLocator(base=d_yticks))
+        if i > 0 and plane_key == 'lewis':
+            print i
+            print ax.get_xticks()
+            ax.set_xticks(ax.get_xticks()[2:])
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
