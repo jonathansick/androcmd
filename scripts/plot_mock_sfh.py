@@ -187,7 +187,8 @@ def plot_sfh(model_sfh, mock_sfh, plot_path):
             continue
         plot_single_sfh_line(ax, model_sfh['sfh'][plane_key],
                              label=labels[plane_key],
-                             color=colors[plane_key])
+                             color=colors[plane_key],
+                             drawstyle='steps-mid')
         _plot_mean_age(ax, model_sfh['sfh'][plane_key].attrs['mean_age'],
                        c=colors[plane_key])
 
