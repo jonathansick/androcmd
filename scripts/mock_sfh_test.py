@@ -120,9 +120,10 @@ def ssp_solar(lockfile, age_myr=100):
 
 SFH_FACTORIES = dict()
 
-
-for myr in (100, 250, 500, 750, 1000, 1500, 2000, 3000, 5000, 10000):
-    key = 'ssp_{0:d}myr_solar'.format(myr)
+# These ages match the ExtendedSolarIsocs isochrone set
+# so that SSP ages fall correctly into isochrone bins
+for myr in (53.7, 100.0, 186.2, 346.7, 645.7, 1380.4, 3467.4, 5370.3, 9549.9):
+    key = 'ssp_{0:d}myr_solar'.format(int(myr))
     SFH_FACTORIES[key] = partial(ssp_solar, age_myr=myr)
 
 
