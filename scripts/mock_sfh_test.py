@@ -39,23 +39,23 @@ def main():
     P = PIPELINES[args.pipeline]
     p = P(**kwargs)
 
-    mocks = {}
-    for sfh_name in args.sfh_names:
-        factory = SFH_FACTORIES[sfh_name]
-        mockfit = MockFit(args.name, factory, p, n_star_amp=True)
-        mockfit.make_dataset()
-        mocks[sfh_name] = mockfit
-
-    print "Fitting {0:d} star formation histories".format(len(mocks))
-
-    fit_args = []
-    for i, (sfh_name, mockfit) in enumerate(mocks.iteritems()):
-        fit_args.append((sfh_name, mockfit, args.fit, i))
-
     h5path = os.path.join(os.getenv('STARFISH'), p.root_dir,
                           '{0}.hdf5'.format(args.name))
     hdf5 = h5py.File(h5path, mode='a')
     exp_group = hdf5.require_group('mocksfh')
+
+    mocks = {}
+    fit_args = []
+    for i, sfh_name in enumerate(args.sfh_names):
+        factory = SFH_FACTORIES[sfh_name]
+        mockfit = MockFit(args.name, factory, p, n_star_amp=True)
+        mockfit.make_dataset()
+        mocks[sfh_name] = mockfit
+        if sfh_name not in exp_group.keys():
+            # do not repeat computations
+            fit_args.append((sfh_name, mockfit, args.fit, i))
+
+    print "Fitting {0:d} star formation histories".format(len(fit_args))
 
     if args.n_synth_cpu > 1:
         pool = Pool(processes=args.n_synth_cpu)
