@@ -134,15 +134,22 @@ class MockFit(object):
         """
         t = np.array(group[mock_name])
         mass = t['sfr_msolar_yr'] * t['dt']
-
         age_gyr = 10. ** t['log(age)'] / 1e9
-        m = np.interp(50.,
-                      np.cumsum(mass) / mass.sum() * 100.,
-                      age_gyr)
+
+        if len(t['sfr'] > 0.) == 1:
+            # special case when the Mock SFH is an SSP.
+            i = np.where(t['sfr'] > 0.)[0]
+            mean_age = age_gyr[i]
+        else:
+            # estimate the mean age from the 50-th percentile of SFH
+            mean_age = np.interp(50.,
+                                 np.cumsum(mass) / mass.sum() * 100.,
+                                 age_gyr)
+
         # add mean_age attribute to group
         # This is a tuple because actual SFH fits will have a second mean age
         # entry that corresponds to uncertainty.
-        group[mock_name].attrs['mean_age'] = (m, 0.)
+        group[mock_name].attrs['mean_age'] = (mean_age, 0.)
 
 
 def make_f475w_f160w_28(dpix=0.05, mag_lim=36.):
