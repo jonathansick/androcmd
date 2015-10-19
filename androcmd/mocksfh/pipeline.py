@@ -11,6 +11,7 @@ from collections import OrderedDict, namedtuple
 from starfisher.testpop import TestPop
 from starfisher.pipeline import PipelineBase, CrowdingBase, PlaneBase
 from starfisher import ColorPlane
+from starfisher.sfh import estimate_mean_age
 
 from ..planes import make_f475w_f160w, make_lewis_ms
 
@@ -136,20 +137,18 @@ class MockFit(object):
         mass = t['sfr_msolar_yr'] * t['dt']
         age_gyr = 10. ** t['log(age)'] / 1e9
 
-        if len(t['sfr'] > 0.) == 1:
-            # special case when the Mock SFH is an SSP.
-            i = np.where(t['sfr'] > 0.)[0]
-            mean_age = age_gyr[i]
-        else:
-            # estimate the mean age from the 50-th percentile of SFH
-            mean_age = np.interp(50.,
-                                 np.cumsum(mass) / mass.sum() * 100.,
-                                 age_gyr)
+        # Use rebinned age estimation from starfisher.sfh that correctly
+        # deals with ages of SSPs.
+        mean_age = estimate_mean_age(
+            age_gyr, mass,
+            mass_positive_sigma=None,
+            mass_negative_sigma=None,
+            n_boot=0)  # not necessary to estimate errors of mock sfh
 
         # add mean_age attribute to group
         # This is a tuple because actual SFH fits will have a second mean age
         # entry that corresponds to uncertainty.
-        group[mock_name].attrs['mean_age'] = (mean_age, 0.)
+        group[mock_name].attrs['mean_age'] = mean_age
 
 
 def make_f475w_f160w_28(dpix=0.05, mag_lim=36.):
