@@ -105,6 +105,11 @@ def _plot_hess(dataset, plane_key, plot_path):
     _imshow_diff = dict(_imshow)
     _imshow_diff['cmap'] = div_map
 
+    label_bbox = {'facecolor': 'w',
+                  'edgecolor': 'None',
+                  'alpha': 0.8,
+                  'pad': 5}
+
     # observations
     hess = np.log10(dataset['obs_hess'][plane_key])
     hess = np.ma.masked_invalid(hess, copy=True)
@@ -112,7 +117,7 @@ def _plot_hess(dataset, plane_key, plot_path):
     ax_obs.set_xlabel(x_label)
     ax_obs.set_ylabel(y_label)
     cb = fig.colorbar(im, cax=ax_obs_cb, orientation='horizontal')
-    cb.set_label(r"$\log(N_*)$ Mock")
+    cb.set_label(r"$\log(N_*)$ Mock", bbox=label_bbox)
     cb.ax.xaxis.set_ticks_position('top')
     cb.locator = mpl.ticker.MultipleLocator(1.)
     cb.update_ticks()
@@ -125,7 +130,7 @@ def _plot_hess(dataset, plane_key, plot_path):
     for tl in ax_model.get_ymajorticklabels():
         tl.set_visible(False)
     cb = fig.colorbar(im, cax=ax_model_cb, orientation='horizontal')
-    cb.set_label(r"$\log(N_*)$ Fit")
+    cb.set_label(r"$\log(N_*)$ Fit", bbox=label_bbox)
     cb.ax.xaxis.set_ticks_position('top')
     cb.locator = mpl.ticker.MultipleLocator(1.)
     cb.update_ticks()
@@ -137,7 +142,7 @@ def _plot_hess(dataset, plane_key, plot_path):
     for tl in ax_chi.get_ymajorticklabels():
         tl.set_visible(False)
     cb = fig.colorbar(im, cax=ax_chi_cb, orientation='horizontal')
-    cb.set_label(r"$\chi^2$")
+    cb.set_label(r"$\chi^2$", bbox=label_bbox)
     cb.ax.xaxis.set_ticks_position('top')
     cb.locator = mpl.ticker.MultipleLocator(5)
     cb.update_ticks()
@@ -149,7 +154,7 @@ def _plot_hess(dataset, plane_key, plot_path):
         tl.set_visible(False)
     ax_diff.set_xlabel(x_label)
     cb = fig.colorbar(im, cax=ax_diff_cb, orientation='horizontal')
-    cb.set_label(r"$\Delta_\mathrm{mock-model}$ ($N_*$)")
+    cb.set_label(r"$\Delta_\mathrm{mock-model}$ ($N_*$)", bbox=label_bbox)
     cb.ax.xaxis.set_ticks_position('top')
     cb.locator = mpl.ticker.MultipleLocator(20)
     cb.update_ticks()
