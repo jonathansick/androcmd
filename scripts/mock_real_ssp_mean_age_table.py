@@ -8,7 +8,7 @@ Create a table of mean ages for the mock SSPs.
 
 # import os
 import argparse
-from collections import OrderedDict
+# from collections import OrderedDict
 
 import numpy as np
 import h5py
@@ -33,29 +33,54 @@ def parse_args():
 
 
 def write_mean_age_table(output_path, dataset):
-    sfh_list = OrderedDict([('ssp_100myr_solar', 100.),
-                            ('ssp_250myr_solar', 250.),
-                            ('ssp_500myr_solar', 500.),
-                            ('ssp_750myr_solar', 750.),
-                            ('ssp_1000myr_solar', 1000.),
-                            ('ssp_1500myr_solar', 1500.),
-                            ('ssp_2000myr_solar', 2000.),
-                            ('ssp_3000myr_solar', 3000.)])
+    # mock_list = [u'ssp_53myr_solar',
+    #              u'ssp_100myr_solar',
+    #              u'ssp_186myr_solar',
+    #              u'ssp_346myr_solar',
+    #              u'ssp_645myr_solar',
+    #              u'ssp_1380myr_solar',
+    #              u'ssp_3467myr_solar',
+    #              u'ssp_5370myr_solar',
+    #              u'ssp_9549myr_solar',
+    #              u'tau_0.1_solar',
+    #              u'tau_0.5_solar',
+    #              u'tau_1.0_solar',
+    #              u'tau_5.0_solar',
+    #              u'tau_10.0_solar',
+    #              u'tau_20.0_solar',
+    #              u'tau_50.0_solar',
+    #              u'tau_100.0_solar']
+    mock_list = [u'ssp_53myr_solar',
+                 u'ssp_100myr_solar',
+                 u'ssp_186myr_solar',
+                 u'ssp_346myr_solar',
+                 u'ssp_645myr_solar',
+                 u'ssp_1380myr_solar',
+                 u'ssp_3467myr_solar',
+                 u'ssp_5370myr_solar',
+                 u'ssp_9549myr_solar']
+
     plane_keys = ['lewis', 'oir_all']
-    fit_mean_ages = {k: np.empty(len(sfh_list)) for k in plane_keys}
-    mock_mean_ages = np.empty(len(sfh_list))
-    for i, (sfh_key, mock_age_myr) in enumerate(sfh_list.items()):
+    fit_mean_ages = {k: np.empty(len(mock_list)) for k in plane_keys}
+    fit_sigma_ages = {k: np.empty(len(mock_list)) for k in plane_keys}
+    mock_mean_ages = np.empty(len(mock_list))
+    for i, sfh_key in enumerate(mock_list):
         mock_mean_ages[i] \
             = dataset[sfh_key]['mock_sfh_marginal'].attrs['mean_age'][0]
         for plane_key in plane_keys:
             fit_mean_ages[plane_key][i] \
                 = dataset[sfh_key]['sfh'][plane_key].attrs['mean_age'][0]
+            fit_sigma_ages[plane_key][i] \
+                = dataset[sfh_key]['sfh'][plane_key].attrs['mean_age'][1]
     cols = [mock_mean_ages]
     for plane_key in plane_keys:
         cols.append(fit_mean_ages[plane_key] - mock_mean_ages)
+        cols.append(fit_sigma_ages[plane_key])
     colnames = ['Mock SSP Age (Gyr)',
                 r'$\Delta A_{\texttt{ACSMS} - \mathrm{mock}}$ (Gyr)',
-                r'$\Delta A_{\texttt{OIRALL} - \mathrm{mock}}$ (Gyr)']
+                r'$\sigma A_\texttt{ACSMS}$ (Gyr)',
+                r'$\Delta A_{\texttt{OIRALL} - \mathrm{mock}}$ (Gyr)',
+                r'$\sigma A_\texttt{OIRALL}$ (Gyr)']
     formats = {c: '.2f' for c in colnames}
     tbl = Table(cols, names=colnames)
     tbl.write(output_path, format='ascii.latex', formats=formats)
