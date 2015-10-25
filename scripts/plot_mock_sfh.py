@@ -80,6 +80,8 @@ def _plot_hess(dataset, plane_key, plot_path):
     origin = dataset['fit_hess'][plane_key].attrs['origin']
     y_label = dataset['fit_hess'][plane_key].attrs['y_label']
     x_label = dataset['fit_hess'][plane_key].attrs['x_label']
+    x_span = dataset['fit_hess'][plane_key].attrs['x_span']
+    y_span = dataset['fit_hess'][plane_key].attrs['y_span']
 
     cube_map = perceptual_rainbow_16.mpl_colormap
     div_map = RdBu_11.mpl_colormap
@@ -162,10 +164,10 @@ def _plot_hess(dataset, plane_key, plot_path):
     for i, ax in enumerate((ax_obs, ax_model, ax_chi, ax_diff)):
         ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(base=d_xticks))
         ax.yaxis.set_major_locator(mpl.ticker.MultipleLocator(base=d_yticks))
+        ax.set_xlim(*x_span)
+        ax.set_ylim(*y_span[::-1])
         if i > 0 and plane_key == 'lewis':
-            print i
-            print ax.get_xticks()
-            ax.set_xticks(ax.get_xticks()[2:])
+            ax.set_xticks([0.0, 0.5, 1.0])
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
