@@ -9,13 +9,14 @@ import os
 from collections import OrderedDict, namedtuple
 
 from starfisher.testpop import TestPop
-from starfisher.pipeline import PipelineBase, CrowdingBase, PlaneBase
+from starfisher.pipeline import PipelineBase, PlaneBase
 from starfisher import ColorPlane
 from starfisher.sfh import estimate_mean_age
 
 from ..planes import make_f475w_f160w, make_lewis_ms
 
-from ..phatpipeline import ExtendedSolarIsocs, ExtendedSolarLockfile
+from ..phatpipeline import (ExtendedSolarIsocs, ExtendedSolarLockfile,
+                            NullCrowding)
 from ..phatpatchfit.pipeline import LewisPatchDust, AutoPhatCrowding
 
 import numpy as np
@@ -293,9 +294,10 @@ class RealErrorsThreeZPipeline(MockPlanes, ExtendedSolarIsocs,
         super(RealErrorsThreeZPipeline, self).__init__(**kwargs)
 
 
-class IdealizedThreeZPipeline(DeepMockPlanes, ExtendedSolarIsocs,
+# class IdealizedThreeZPipeline(DeepMockPlanes, ExtendedSolarIsocs,
+class IdealizedThreeZPipeline(MockPlanes, ExtendedSolarIsocs,
                               ExtendedSolarLockfile, LewisPatchDust,
-                              CrowdingBase,
+                              NullCrowding,
                               PipelineBase):
     """Pipeline for fitting with three metallicity tracks given no crowding
     errors, and with deep CMD planes.

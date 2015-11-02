@@ -25,6 +25,7 @@ from padova.isocdata import join_isochrone_sets, Isochrone
 
 from starfisher import Lockfile
 from starfisher import ExtantCrowdingTable
+from starfisher import MockNullCrowdingTable
 from starfisher.dust import ExtinctionDistribution
 from starfisher.pipeline import (
     PipelineBase, IsochroneSetBase, DatasetBase, LockBase,
@@ -354,6 +355,19 @@ class PhatCrowding(CrowdingBase):
             for yi, xi in zip(yidx, xidx):
                 plane.mask_region((x_grid[xi], x_grid[xi + 1]),
                                   (y_grid[yi], y_grid[yi + 1]))
+
+
+class NullCrowding(object):
+    """Crowding pipeline for no photometric errors due to crowidng."""
+    def __init__(self, **kwargs):
+        super(NullCrowding, self).__init__(**kwargs)
+
+    def mask_planes(self):
+        pass
+
+    def build_crowding(self):
+        path = os.path.join(self.synth_dir, "crowding.dat")
+        self.crowd = MockNullCrowdingTable(path, self.n_bands)
 
 
 class NoDust(ExtinctionBase):
