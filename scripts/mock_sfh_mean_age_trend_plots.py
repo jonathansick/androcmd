@@ -25,25 +25,39 @@ def main():
 def plot_ssp_mean_age_accuracy(plot_path):
     experiments = ['m3', 'm4', 'm5', 'm6']
     labels = ['\#3', '\#4', '\#5', '\#6']
-    # palette = Cubehelix.make(start=0.3, rotation=-0.5, n=4)
-    # colors = palette.mpl_colors
     colors = Set1_4.mpl_colors
 
-    fig = Figure(figsize=(3.5, 3.5), frameon=False)
+    fig = Figure(figsize=(6.5, 3.5), frameon=False)
     canvas = FigureCanvas(fig)
-    gs = gridspec.GridSpec(1, 1,
-                           left=0.2, right=0.95, bottom=0.15, top=0.95,
-                           wspace=None, hspace=None,
+    gs = gridspec.GridSpec(1, 2,
+                           left=0.1, right=0.95, bottom=0.15, top=0.95,
+                           wspace=0.1, hspace=None,
                            width_ratios=None, height_ratios=None)
-    ax = fig.add_subplot(gs[0])
-    for experiment, label, color in zip(experiments, labels, colors):
-        t = ssp_mean_age_table(experiment=experiment)
-        ax.plot(t['mock_age'], t['oir_all_mean_age'] - t['mock_age'],
-                c=color, label=label)
-    ax.set_ylabel(
-        r'$\langle A \rangle_\mathrm{fit} - \langle A \rangle_\mathrm{mock}$')
-    ax.set_xlabel(r'$\langle A \rangle_\mathrm{mock}$')
-    ax.legend(loc='lower left')
+    ax_lewis = fig.add_subplot(gs[0])
+    ax_oirall = fig.add_subplot(gs[1])
+    for plane, ax in zip(['lewis', 'oir_all'], [ax_lewis, ax_oirall]):
+        for experiment, label, color in zip(experiments, labels, colors):
+            t = ssp_mean_age_table(experiment=experiment)
+            age_diff = t['{0}_mean_age'.format(plane)] - t['mock_age']
+            age_sigma = t['{0}_mean_age_sigma'.format(plane)]
+            ax.plot(t['mock_age'],
+                    age_diff,
+                    c=color, label=label, lw=1.5)
+            ax.plot(t['mock_age'],
+                    -age_sigma,
+                    c=color, lw=0.5, ls='--')
+            ax.plot(t['mock_age'],
+                    age_sigma,
+                    c=color, lw=0.5, ls='--')
+        ax.set_xlabel(r'$\langle A \rangle_\mathrm{mock}$ (Gyr)')
+        ax.set_ylim(-10, 10)
+    ax_lewis.set_ylabel(
+        r'$\langle A \rangle_\mathrm{fit} - \langle A \rangle_\mathrm{mock}$ (Gyr)')  # NOQA
+    for tl in ax_oirall.get_ymajorticklabels():
+        tl.set_visible(False)
+    ax_lewis.text(0.1, 0.9, 'ACS-MS', transform=ax_lewis.transAxes)
+    ax_oirall.text(0.1, 0.9, 'OIR-ALL', transform=ax_oirall.transAxes)
+    ax_lewis.legend(loc='lower left')
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
