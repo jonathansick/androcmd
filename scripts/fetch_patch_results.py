@@ -13,7 +13,7 @@ import vos
 import h5py
 import numpy as np
 
-from starfisher.sfh import estimate_mean_age
+from starfisher.sfh import estimate_mean_age, marginalize_sfh_metallicity
 
 from androcmd.phatpatchfit import compute_patch_gal_coords
 
@@ -123,29 +123,24 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
         chisqs.append([patch_group['chi_hess'][fit_key].attrs['chi_red']
                        for fit_key in fit_keys])
 
+        # compute a marginalized SFH and persist it to the dataset
+        marginal_sfh_group = patch_group.create_group('sfh_marginal')
+        for fit_key in fit_keys:
+            sfh_table = patch_group['sfh'][fit_key]
+            marginalized_sfh_table = marginalize_sfh_metallicity(sfh_table)
+            marginal_sfh_group.create_dataset(
+                fit_key,
+                data=marginalized_sfh_table)
+
         # Compute the 25th and 75th percentils of cumulative SF.
         _25 = []
         _75 = []
         for fit_key in fit_keys:
-            t = patch_group['sfh'][fit_key]
-
-            # Marginalize metallicity
-            age_vals = np.unique(t['log(age)'])
-            s = np.argsort(age_vals)
-            age_vals = age_vals[s]
-            A = []
-            mass = []
-            for i, age_val in enumerate(age_vals):
-                tt = t[t['log(age)'] == age_val]
-                bin_mass = np.sum(tt['mass'])
-                A.append(age_val)
-                mass.append(bin_mass)
-            srt = np.argsort(A)
-            A = np.array(A)
-            mass = np.array(mass)
-            A = A[srt]
-            age_gyr = A ** 10. / 1e9
-            mass = mass[srt]
+            t = patch_group['sfh_marginal'][fit_key]
+            age_gyr = t['log(age)'] ** 10. / 1e9
+            srt = np.argsort(age_gyr)
+            age_gyr = age_gyr[srt]
+            mass = t['mass'][srt]
             fractional_mass = np.cumsum(mass) / mass.sum() * 100.
             result = np.interp([25., 75.],
                                fractional_mass,
