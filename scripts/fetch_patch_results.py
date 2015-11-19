@@ -13,6 +13,8 @@ import vos
 import h5py
 import numpy as np
 
+from starfisher.sfh import estimate_mean_age
+
 from androcmd.phatpatchfit import compute_patch_gal_coords
 
 
@@ -99,6 +101,21 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
 
         if fit_keys is None:
             fit_keys = patch_group['sfh'].keys()
+
+        # redo the mean age estimation for each SFH; the SFH may have been
+        # persisted with an incorrect mean age estimation algo
+        for fit_key in fit_keys:
+            sfh_table = patch_group['sfh'][fit_key]
+            bin_age = sfh_table['log(age)'] ** 10. / 1e9
+            mass = sfh_table['mass']
+            mass_positive_sigma = sfh_table['mass_pos_err']
+            mass_negative_sigma = sfh_table['mass_neg_err']
+            mean_age = estimate_mean_age(
+                bin_age, mass,
+                mass_positive_sigma=mass_positive_sigma,
+                mass_negative_sigma=mass_negative_sigma)
+            sfh_table.attrs['mean_age'] = mean_age
+
         mean_ages.append([patch_group['sfh'][fit_key].attrs['mean_age'][0]
                           for fit_key in fit_keys])
         mean_age_errs.append([patch_group['sfh'][fit_key].attrs['mean_age'][1]
