@@ -168,12 +168,12 @@ def plot_mean_age_map(dataset, plot_path):
     dec = dataset['sfh_table']['dec'][:]
 
     cmap = perceptual_rainbow_16.mpl_colormap
-    normalizer = mpl.colors.Normalize(vmin=0, vmax=10, clip=True)
+    normalizer = mpl.colors.Normalize(vmin=0, vmax=8, clip=True)
 
     for ax, fit_key in zip([ax_ms, ax_oir], ['lewis', 'oir_all']):
         mean_age = dataset['sfh_table']['mean_age_{0}'.format(fit_key)]
         mapper = ax.scatter(ra, dec, c=mean_age, norm=normalizer, cmap=cmap,
-                            edgecolors='None', s=16,
+                            edgecolors='None', s=50,
                             transform=ax.get_transform('world'))
 
     cbar = fig.colorbar(mapper, cax=ax_cb, orientation='vertical')
@@ -193,7 +193,7 @@ def plot_epoch_sfr_map_vertical(dataset, fit_key, plot_path):
     fig = Figure(figsize=(6.5, 7.5), frameon=False)
     canvas = FigureCanvas(fig)
     gs = gridspec.GridSpec(ny, nx + 1,
-                           left=0.07, right=0.9, bottom=0.05, top=0.98,
+                           left=0.12, right=0.9, bottom=0.05, top=0.98,
                            wspace=0.05, hspace=0.05,
                            width_ratios=[1] * nx + [0.1],
                            height_ratios=None)

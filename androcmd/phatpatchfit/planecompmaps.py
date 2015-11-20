@@ -30,10 +30,10 @@ def setup_plane_comp_axes():
         ax.coords[1].set_major_formatter('d.d')
         ax.coords[0].set_major_formatter('hh:mm')
     ax_oir.coords[1].ticklabels.set_visible(False)
-    ax_ms.text(0.9, 0.9, 'ACS-MS', transform=ax_ms.transAxes,
+    ax_ms.text(0.9, 0.95, 'ACS-MS', transform=ax_ms.transAxes,
                ha='right', va='top',
                zorder=10)
-    ax_oir.text(0.9, 0.9, 'OIR-ALL', transform=ax_oir.transAxes,
+    ax_oir.text(0.9, 0.95, 'OIR-ALL', transform=ax_oir.transAxes,
                 ha='right', va='top',
                 zorder=10)
 
