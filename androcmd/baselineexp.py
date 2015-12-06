@@ -566,6 +566,9 @@ def plot_isocs_lewis(plot_path, pipeline, dataset):
     cb_phases.set_label(r"Stage")
     # cb_phases.update_ticks()
 
+    for ax in [ax_ages, ax_phases]:
+        ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(base=0.5))
+
     for tl in ax_phases.get_ymajorticklabels():
         tl.set_visible(False)
     ax_phases.set_ylabel('')
