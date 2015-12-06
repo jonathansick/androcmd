@@ -61,7 +61,8 @@ def plot_ssp_mean_age_accuracy(plot_path):
         tl.set_visible(False)
     ax_lewis.text(0.1, 0.9, 'ACS-MS', transform=ax_lewis.transAxes)
     ax_oirall.text(0.1, 0.9, 'OIR-ALL', transform=ax_oirall.transAxes)
-    ax_lewis.legend(loc='upper right')
+    ax_lewis.set_xlim(0., 2.)
+    ax_lewis.legend(loc='lower left')
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
