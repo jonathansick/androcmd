@@ -489,6 +489,91 @@ def plot_isocs(plot_path, pipeline, dataset):
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
 
+def plot_isocs_lewis(plot_path, pipeline, dataset):
+    fig = Figure(figsize=(6.5, 5.), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(2, 3,
+                           left=0.08, right=0.85, bottom=0.08, top=0.95,
+                           wspace=0.15, hspace=0.25,
+                           width_ratios=(1, 1, 0.1), height_ratios=(0.1, 1.))
+    cax_ages = fig.add_subplot(gs[0, 0])
+    cax_phases = fig.add_subplot(gs[1, 2])
+    ax_ages = fig.add_subplot(gs[1, 0])
+    ax_phases = fig.add_subplot(gs[1, 1])
+
+    isoc_set = get_demo_age_grid(**dict(isoc_kind='parsec_CAF09_v1.2S',
+                                        photsys_version='yang'))
+
+    # Get extinction in F475W and F160W
+    Av = mw_Av()
+    rel_av = phat_rel_extinction()
+    A_475 = rel_av[2] * Av
+    A_814 = rel_av[3] * Av
+
+    plane_key = 'lewis'
+
+    # Plot the observed Hess diagram  in each axes
+    for ax in [ax_ages, ax_phases]:
+        pipeline.plot_obs_hess(ax_ages, dataset, plane_key, imshow=None)
+        pipeline.plot_obs_hess(ax_phases, dataset, plane_key, imshow=None)
+
+    # Plot isochrones by age
+    cmap = palettable.cubehelix.perceptual_rainbow_16.mpl_colormap
+    scalar_map = mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(vmin=7.,
+                                       vmax=10.1),
+                                       cmap=cmap)
+    scalar_map.set_array(np.array([isoc.age for isoc in isoc_set]))
+
+    d = Distance(785 * u.kpc)
+    for isoc in isoc_set:
+        ax_ages.plot(isoc['F475W'] + A_475 - isoc['F814W'] + A_814,
+                     isoc['F814W'] + A_814 + d.distmod.value,
+                     c=scalar_map.to_rgba(np.log10(isoc.age)))
+    cax_ages = plt.colorbar(mappable=scalar_map, cax=cax_ages, ax=ax_ages,
+                            orientation='horizontal')
+    cax_ages.set_label(r"$\log(A/\mathrm{yr})$")
+
+    # Plot phases
+    phase_labels = {0: 'Pre-MS', 1: 'MS', 2: 'SGB', 3: 'RGB',
+                    4: 'CHeB(1)', 5: 'CHeB(2)', 6: 'CHeB(3)',
+                    7: 'E-AGB', 8: 'TP-AGB'}
+    cmap = mpl.colors.ListedColormap(
+        palettable.colorbrewer.qualitative.Set1_9.mpl_colors)
+    scalar_map = mpl.cm.ScalarMappable(norm=mpl.colors.Normalize(vmin=-0.5,
+                                                                 vmax=8.5),
+                                       cmap=cmap)
+    scalar_map.set_array(np.array(range(0, 9)))
+
+    d = Distance(785 * u.kpc)
+    for isoc in isoc_set:
+        phases = np.unique(isoc['stage'])
+        srt = np.argsort(phases)
+        phases = phases[srt]
+        for p in phases:
+            s = np.where(isoc['stage'] == p)[0]
+            ax_phases.plot(isoc['F475W'][s] + A_475 - isoc['F814W'][s] + A_814,
+                           isoc['F814W'][s] + A_814 + d.distmod.value,
+                           c=scalar_map.to_rgba(p),
+                           lw=0.8)
+    cb_phases = plt.colorbar(mappable=scalar_map,
+                             cax=cax_phases, ax=ax_phases, ticks=range(0, 9),
+                             orientation='vertical')
+    # for tl in ax.get_xmajorticklabels():
+    #     tl.set_visible(False)
+    # for label in cb_phases.ax.get_xmajorticklabels():
+    #     label.set_rotation('vertical')
+    cb_phases.ax.set_yticklabels([phase_labels[p] for p in range(0, 9)])
+    cb_phases.set_label(r"Stage")
+    # cb_phases.update_ticks()
+
+    for tl in ax_phases.get_ymajorticklabels():
+        tl.set_visible(False)
+    ax_phases.set_ylabel('')
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
 def plot_lockfile(plot_path, pipeline):
     fig = Figure(figsize=(3.5, 3.5), frameon=False)
     canvas = FigureCanvas(fig)

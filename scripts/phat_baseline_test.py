@@ -61,9 +61,10 @@ def main():
         tabulate_fit_chi(args.chi_table, pipeline, dataset)
 
     if args.plot_isoc is not None:
-        from androcmd.baselineexp import plot_isocs
+        from androcmd.baselineexp import plot_isocs, plot_isocs_lewis
         dataset = PhatCatalog(args.brick)
         plot_isocs(args.plot_isoc, pipeline, dataset)
+        plot_isocs_lewis(args.plot_isoc + '_lewis', pipeline, dataset)
 
     if args.plot_lock is not None:
         from androcmd.baselineexp import plot_lockfile
