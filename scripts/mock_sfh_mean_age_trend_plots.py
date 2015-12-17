@@ -15,22 +15,28 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.gridspec as gridspec
 # from palettable.cubehelix import Cubehelix
-from palettable.colorbrewer.qualitative import Set1_4
+from palettable.colorbrewer.qualitative import Set1_4, Set1_5
+from palettable.colorbrewer.sequential import YlGnBu_4
 
 
 def main():
-    plot_ssp_mean_age_accuracy('real_mock_ssp_mean_age_accuracy')
-    plot_ssp_mean_age_percent_accuracy(
-        'real_mock_ssp_mean_age_percent_accuracy')
-    plot_tau_mean_age_accuracy(
-        'real_mock_tau_mean_age_accuracy')
+    # plot_ssp_mean_age_accuracy('real_mock_ssp_mean_age_accuracy')
+    # plot_ssp_mean_age_accuracy(
+    #     'mock_ssp_mean_age_accuracy',
+    #     experiments=('m3', 'm4', 'm5', 'm6', 'ideal6'),
+    #     labels=('\#3', '\#4', '\#5', '\#6', 'No Errors'),
+    #     colors=Set1_5.mpl_colors)
+    plot_ideal_mean_age_accuracy('mock_ssp_ideal_mean_age_accuracy')
+    # plot_ssp_mean_age_percent_accuracy(
+    #     'real_mock_ssp_mean_age_percent_accuracy')
+    # plot_tau_mean_age_accuracy(
+    #     'real_mock_tau_mean_age_accuracy')
 
 
-def plot_ssp_mean_age_accuracy(plot_path):
-    experiments = ['m3', 'm4', 'm5', 'm6']
-    labels = ['\#3', '\#4', '\#5', '\#6']
-    colors = Set1_4.mpl_colors
-
+def plot_ssp_mean_age_accuracy(plot_path,
+                               experiments=('m3', 'm4', 'm5', 'm6'),
+                               labels=('\#3', '\#4', '\#5', '\#6'),
+                               colors=Set1_4.mpl_colors):
     fig = Figure(figsize=(6.5, 3.5), frameon=False)
     canvas = FigureCanvas(fig)
     gs = gridspec.GridSpec(1, 2,
@@ -63,6 +69,60 @@ def plot_ssp_mean_age_accuracy(plot_path):
     ax_oirall.text(0.1, 0.9, 'OIR-ALL', transform=ax_oirall.transAxes)
     ax_lewis.set_xlim(0., 2.)
     ax_lewis.legend(loc='lower left')
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_ideal_mean_age_accuracy(plot_path):
+    real_experiments = ['m6', 'm5', 'm4', 'm3']
+    real_labels = ['\#3', '\#4', '\#5', '\#6'],
+    real_colors = YlGnBu_4.mpl_colors[::-1]
+
+    ideal_experiment = 'ideal6'
+    ideal_planes = ['oir_all', 'oir_all_28', 'oir_all_30', 'oir_all_32']
+    ideal_labels = ['Errorless OIR-ALL',
+                    'Errorless OIR-ALL-28',
+                    'Errorless OIR-ALL-30',
+                    'Errorless OIR-ALL-32']
+    ideal_colors = Set1_4.mpl_colors
+
+    fig = Figure(figsize=(6.5, 3.5), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 1,
+                           left=0.1, right=0.95, bottom=0.15, top=0.95,
+                           wspace=0.1, hspace=None,
+                           width_ratios=None, height_ratios=None)
+    ax = fig.add_subplot(gs[0])
+
+    itr = zip(real_experiments, real_labels, real_colors)
+    for experiment, label, color in itr:
+        t = ssp_mean_age_table(experiment=experiment)
+        age_diff = t['{0}_mean_age'.format('oir_all')] - t['mock_age']
+        # age_sigma = t['{0}_mean_age_sigma'.format('oir_all')]
+        ax.plot(t['mock_age'],
+                age_diff,
+                c=color, label=label, lw=4, alpha=0.8)
+        # ax.plot(t['mock_age'],
+        #         -age_sigma,
+        #         c=color, lw=0.5, ls='--')
+        # ax.plot(t['mock_age'],
+        #         age_sigma,
+        #         c=color, lw=0.5, ls='--')
+
+    for plane, label, color in zip(ideal_planes, ideal_labels, ideal_colors):
+        t = ssp_mean_age_table(experiment=ideal_experiment)
+        age_diff = t['{0}_mean_age'.format(plane)] - t['mock_age']
+        # age_sigma = t['{0}_mean_age_sigma'.format(plane)]
+        ax.plot(t['mock_age'],
+                age_diff,
+                c=color, label=label, lw=1.5)
+
+    ax.set_xlabel(r'$\langle A \rangle_\mathrm{mock}$ (Gyr)')
+    ax.set_ylim(-10, 10)
+
+    ax.set_ylabel(
+        r'$\langle A \rangle_\mathrm{fit} - \langle A \rangle_\mathrm{mock}$ (Gyr)')  # NOQA
+    ax.legend(loc='lower left', fontsize=7)
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
