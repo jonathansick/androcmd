@@ -27,21 +27,23 @@ HessPlane = namedtuple('HessPlane',
 
 
 def main():
-    args = [(6, 'oir_all')]
+    args = [(6, 'oir_all'),
+            (5, 'oir_all'),
+            (4, 'oir_all'),
+            (3, 'oir_all')]
     for ast_field, plane_name in args:
-        plot('mock_ssp_hess_age_grid_{0:d}_{plane}'.format(ast_field,
-                                                           plane_name),
+        plot('mock_ssp_hess_age_grid_{0:d}_{1}'.format(ast_field,
+                                                       plane_name),
              ast_field, plane_name)
 
 
-def load_dataset(ast_number, model_name):
+def load_dataset(ast_number, model_name, plane_name):
     path = os.path.join(os.getenv('STARFISH'),
                         'm{0:d}'.format(ast_number),
                         'm{0:d}.hdf5'.format(ast_number))
     f = h5py.File(path, 'r')
 
-    mock = f['mocksfh'][model_name]['obs_hess']['oir_all']
-    print mock.attrs.keys()
+    mock = f['mocksfh'][model_name]['obs_hess'][plane_name]
     mock_image = np.log10(mock)
     mock_image = np.ma.masked_invalid(mock_image)
     mock_hess = HessPlane(image=mock_image,
@@ -86,18 +88,19 @@ def plot(plot_path, ast_field, plane_name):
     axes_mock = []
     axes_diff = []
 
-    for i, (model_name, age) in enumerate(zip(ages, model_names)):
+    for i, (age, model_name) in enumerate(zip(ages, model_names)):
         ax_mock = fig.add_subplot(gs[0, i])
         axes_mock.append(ax_mock)
         ax_diff = fig.add_subplot(gs[1, i])
         axes_diff.append(ax_diff)
 
         ax_mock.text(0.5, 1.04,
-                     r'$A = {0:.0f}$~Myr'.format(age),
+                     r'${0:.0f}$~Myr'.format(age),
+                     fontsize=7,
                      va='baseline', ha='center',
                      transform=ax_mock.transAxes)
 
-        mock, diff = load_dataset(ast_field, model_name)
+        mock, diff = load_dataset(ast_field, model_name, plane_name)
 
         # Plot the mock image
         im = ax_mock.imshow(mock.image, vmin=0, vmax=1.,
@@ -133,8 +136,8 @@ def plot(plot_path, ast_field, plane_name):
                             norm=None,
                             aspect='auto',
                             interpolation='none')
-        ax_diff.set_xlabel(mock.x_label)
         if i == 0:
+            ax_diff.set_xlabel(mock.x_label)
             ax_diff.set_ylabel(mock.y_label)
         else:
             for tl in ax_diff.get_ymajorticklabels():
