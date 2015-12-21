@@ -78,7 +78,7 @@ def plot_ideal_mean_age_accuracy(plot_path):
     real_labels = ['\#3', '\#4', '\#5', '\#6'],
     real_colors = YlGnBu_4.mpl_colors[::-1]
 
-    ideal_experiment = 'ideal6'
+    ideal_experiment = 'ideal'
     ideal_planes = ['oir_all', 'oir_all_28', 'oir_all_30', 'oir_all_32']
     ideal_labels = ['Errorless OIR-ALL',
                     'Errorless OIR-ALL-28',

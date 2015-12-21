@@ -21,6 +21,7 @@ from palettable.cubehelix import perceptual_rainbow_16
 
 from androcmd.phatpatchfit import (load_galex_map,
                                    setup_galex_axes, setup_plane_comp_axes,
+                                   setup_plane_axes,
                                    marginalize_metallicity,
                                    get_scaled_sfr_values,
                                    scale_sfr,
@@ -45,6 +46,8 @@ def main():
 
     if args.mean_age_map is not None:
         plot_mean_age_map(dataset, args.mean_age_map)
+        plot_single_mean_age_map(dataset, 'oir_all',
+                                 args.mean_age_map + '_oir_all')
 
     if args.epoch_sfr_maps is not None:
         for fit_key in ['lewis', 'oir_all']:
@@ -175,6 +178,25 @@ def plot_mean_age_map(dataset, plot_path):
         mapper = ax.scatter(ra, dec, c=mean_age, norm=normalizer, cmap=cmap,
                             edgecolors='None', s=50,
                             transform=ax.get_transform('world'))
+
+    cbar = fig.colorbar(mapper, cax=ax_cb, orientation='vertical')
+    cbar.set_label(r'$\langle A \rangle$ (Gyr)')
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_single_mean_age_map(dataset, plane_name, plot_path):
+    fig, canvas, ax, ax_cb = setup_plane_axes()
+
+    ra = dataset['sfh_table']['ra'][:]
+    dec = dataset['sfh_table']['dec'][:]
+
+    cmap = perceptual_rainbow_16.mpl_colormap
+    normalizer = mpl.colors.Normalize(vmin=1, vmax=8, clip=True)
+
+    mean_age = dataset['sfh_table']['mean_age_{0}'.format(plane_name)]
+    mapper = ax.scatter(ra, dec, c=mean_age, norm=normalizer, cmap=cmap,
+                        edgecolors='None', s=45,
+                        transform=ax.get_transform('world'))
 
     cbar = fig.colorbar(mapper, cax=ax_cb, orientation='vertical')
     cbar.set_label(r'$\langle A \rangle$ (Gyr)')

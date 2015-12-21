@@ -38,3 +38,22 @@ def setup_plane_comp_axes():
                 zorder=10)
 
     return fig, canvas, ax_ms, ax_oir, ax_cb
+
+
+def setup_plane_axes():
+    basemap = load_galex_map()
+
+    fig = Figure(figsize=(4, 3.5), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 2,
+                           left=0.04, right=0.8, bottom=0.1, top=0.95,
+                           wspace=0.00, hspace=None,
+                           width_ratios=(1, 0.08), height_ratios=None)
+
+    ax = setup_galex_axes(fig, gs[0], basemap)
+    ax_cb = fig.add_subplot(gs[1])
+
+    ax.coords[1].set_major_formatter('d.d')
+    ax.coords[0].set_major_formatter('hh:mm')
+
+    return fig, canvas, ax, ax_cb
