@@ -35,8 +35,8 @@ def main():
 
     dataset = h5py.File(args.hdf5_path, 'r')
 
-    if args.radial_sfh_points is not None:
-        plot_radial_sfh_points(dataset, args.radial_sfh_points)
+    if args.radial_mean_age is not None:
+        plot_radial_mean_age(dataset, args.radial_mean_age)
 
     if args.rchi_hist is not None:
         plot_reduced_chi_hist(dataset, args.rchi_hist)
@@ -63,7 +63,7 @@ def main():
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('hdf5_path')
-    parser.add_argument('--radial-sfh-points', default=None)
+    parser.add_argument('--radial-mean-age', default=None)
     parser.add_argument('--rchi-hist', default=None)
     parser.add_argument('--sfh-lines', default=None)
     parser.add_argument('--mean-age-map', default=None)
@@ -75,7 +75,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def plot_radial_sfh_points(dataset, plot_path):
+def plot_radial_mean_age(dataset, plot_path):
     fig = Figure(figsize=(3.5, 3.5), frameon=False)
     canvas = FigureCanvas(fig)
     gs = gridspec.GridSpec(1, 1,
@@ -85,16 +85,16 @@ def plot_radial_sfh_points(dataset, plot_path):
     ax = fig.add_subplot(gs[0])
     R = dataset['sfh_table']['r_kpc'][:]
     mean_age = dataset['sfh_table']['mean_age_oir_all'][:]
-    mean_age_ms = dataset['sfh_table']['mean_age_lewis'][:]
-    ax.scatter(R, mean_age, s=3, edgecolors='None', facecolors='firebrick',
+    # mean_age_ms = dataset['sfh_table']['mean_age_lewis'][:]
+    ax.scatter(R, mean_age, s=3, edgecolors='None', facecolors='k',
                label='OIR-ALL')
-    ax.scatter(R, mean_age_ms, s=3, edgecolors='None', facecolors='dodgerblue',
-               label='ACS-MS')
+    # ax.scatter(R, mean_age_ms, s=3, edgecolors='None', facecolors='dodgerblue',
+    #            label='ACS-MS')
     ax.set_xlim(0., 25.)
-    ax.set_ylim(0., 12.)
+    ax.set_ylim(0., 10.)
     ax.set_xlabel(r'$R_\mathrm{maj}$ (kpc)')
     ax.set_ylabel(r'$\langle A \rangle$ (Gyr)')
-    ax.legend(frameon=True, markerscale=2, ncol=2)
+    # ax.legend(frameon=True, markerscale=2, ncol=2)
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
