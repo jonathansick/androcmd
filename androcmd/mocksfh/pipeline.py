@@ -295,7 +295,7 @@ class RealErrorsThreeZPipeline(MockPlanes, ExtendedSolarIsocs,
 
 
 # class IdealizedThreeZPipeline(DeepMockPlanes, ExtendedSolarIsocs,
-class IdealizedThreeZPipeline(MockPlanes, ExtendedSolarIsocs,
+class IdealizedThreeZPipeline(DeepMockPlanes, ExtendedSolarIsocs,
                               ExtendedSolarLockfile, LewisPatchDust,
                               NullCrowding,
                               PipelineBase):
