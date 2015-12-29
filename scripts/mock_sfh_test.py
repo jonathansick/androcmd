@@ -100,6 +100,7 @@ def parse_args():
                         dest='n_synth_cpu',
                         help='Number of CPUs to run synth with')
     parser.add_argument('--fit', nargs='*',
+                        default=['lewis', 'oir_all'],
                         help='Names of fitted planes')
     return parser.parse_args()
 
@@ -172,6 +173,7 @@ def get_patch_info(json, brick, patch_num):
 
 def _run_fit(args):
     sfh_name, mockfit, fit_keys, index = args
+    print '_run_fit', sfh_name, fit_keys, index
     mockfit.run_fit(fit_keys, index)
     return sfh_name, mockfit
 

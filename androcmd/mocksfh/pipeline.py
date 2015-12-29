@@ -243,12 +243,12 @@ class DeepMockPlanes(PlaneBase):
         self._planes = OrderedDict([
             ('oir_all', make_f475w_f160w()),
             ('oir_all_28', make_f475w_f160w_28()),
-            ('oir_all_30', make_f475w_f160w_30()),
-            ('oir_all_32', make_f475w_f160w_32()),
+            # ('oir_all_30', make_f475w_f160w_30()),
+            # ('oir_all_32', make_f475w_f160w_32()),
             ('lewis', make_lewis_ms()),
             ('lewis_28', make_lewis_ms_28()),
-            ('lewis_30', make_lewis_ms_30()),
-            ('lewis_32', make_lewis_ms_32()),
+            # ('lewis_30', make_lewis_ms_30()),
+            # ('lewis_32', make_lewis_ms_32()),
         ])
         super(DeepMockPlanes, self).__init__(**kwargs)
 
