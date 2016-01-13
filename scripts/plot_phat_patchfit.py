@@ -59,6 +59,9 @@ def main():
         plot_major_ax_sfr(dataset, args.major_ax_sfr)
         plot_major_ax_sfr_linear(dataset, args.major_ax_sfr + '_linear')
 
+    if args.cumulative_mass_plot is not None:
+        plot_major_ax_cumulative_mass(dataset, args.cumulative_mass_plot)
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -72,6 +75,9 @@ def parse_args():
         help='Map comparing SFR at for MS and ALL, individually')
     parser.add_argument('--major-ax-sfr', default=None,
                         help='Emulate Lewis 2015 Fig 6')
+    parser.add_argument(
+        '--major-ax-cmass', default=None,
+        help='Major axis cumulative mass build-up')
     return parser.parse_args()
 
 
