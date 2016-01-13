@@ -8,7 +8,6 @@ Tools for plotting SFR along the major axis.
 import matplotlib as mpl
 import numpy as np
 
-from .analysistools import marginalize_metallicity
 from .sfrplots import scale_sfr, lin_scale_sfr
 
 
@@ -55,7 +54,9 @@ def compute_sfr_in_span(dataset, patch_keys, fit_key, myr_min, myr_max,
     """
     patch_sfrs = []
     for k in patch_keys:
-        logage, sfr = marginalize_metallicity(dataset['patches'][k], fit_key)
+        t = np.array(dataset['patches'][k]['sfh_marginal'][fit_key])
+        logage = t['log(age)']
+        sfr = t['sfr']
         if lin_scale:
             sfr = lin_scale_sfr(sfr, dataset['patches'][k])
         else:
