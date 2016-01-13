@@ -22,7 +22,6 @@ from palettable.cubehelix import perceptual_rainbow_16
 from androcmd.phatpatchfit import (load_galex_map,
                                    setup_galex_axes, setup_plane_comp_axes,
                                    setup_plane_axes,
-                                   marginalize_metallicity,
                                    get_scaled_sfr_values,
                                    scale_sfr,
                                    SFR_LABEL, LIN_SFR_LABEL,
@@ -148,7 +147,10 @@ def plot_sfh_lines(dataset, plot_path):
         for fit_key, ax in zip(('lewis', 'oir_all'), (ax_ms, ax_oir)):
             r_kpc = patch_group.attrs['r_kpc']
             radii.append(r_kpc)
-            logage, sfr = marginalize_metallicity(patch_group, fit_key)
+            # logage, sfr = marginalize_metallicity(patch_group, fit_key)
+            t = np.array(patch_group['sfh_marginal'][fit_key])
+            sfr = t['sfr']
+            logage = t['log(age)']
             scaled_sfr = scale_sfr(sfr, patch_group)
             ax.plot(logage, scaled_sfr, '-', lw=0.5,
                     c=r_mapper.to_rgba(r_kpc, alpha=0.5))
@@ -361,6 +363,10 @@ def plot_major_ax_sfr_linear(dataset, plot_path):
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_major_ax_cumulative_mass(dataset, plot_path):
+    patch_keys = majoraxplot.select_patches(dataset)
 
 
 if __name__ == '__main__':
