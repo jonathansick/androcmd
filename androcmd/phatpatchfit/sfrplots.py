@@ -7,8 +7,6 @@ Tools for plotting SFR
 
 import numpy as np
 
-from .analysistools import marginalize_metallicity
-
 
 SFR_LABEL = r'$\langle \log_{10} \Sigma_\mathrm{SFR} \rangle ~'\
             r'(10^{-3}~\mathrm{M}_\odot~\mathrm{yr}^{-1}'\
@@ -27,7 +25,9 @@ def get_scaled_sfr_values(dataset, fit_key, age):
     dec = []
     log_sfrs = []
     for patch_name, patch_group in patches.items():
-        logage_tbl, sfr_tbl = marginalize_metallicity(patch_group, fit_key)
+        t = patch_group['sfh_marginal'][fit_key]
+        logage_tbl = t['log(age)']
+        sfr_tbl = t['sfr']
         sfr = np.interp(np.log10(age), logage_tbl, sfr_tbl)
         log_sfrs.append(scale_sfr(sfr, patch_group))
         ra.append(patch_group.attrs['ra0'])
