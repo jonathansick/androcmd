@@ -3,6 +3,8 @@
 """
 Get HDF5 patch results on VOSpace and combine them into a single HDF5 file.
 
+Run as fetch_patch_results.py phat_field_starfish.hdf5  --vodir phat/fields
+
 2015-06-16 - Created by Jonathan Sick
 """
 
@@ -12,6 +14,7 @@ import argparse
 import vos
 import h5py
 import numpy as np
+from astropy.table import Table
 
 from starfisher.sfh import estimate_mean_age, marginalize_sfh_metallicity
 
@@ -64,7 +67,9 @@ def main():
 
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="fetch_patch_results.py phat_field_starfish.hdf5 "
+                    "--vodir phat/fields")
     parser.add_argument('output_hdf5')
     parser.add_argument('--vodir', default='phat/patches')
     return parser.parse_args()
@@ -126,11 +131,11 @@ def reduce_sfh_table(dataset, patches, fit_keys=None):
         # compute a marginalized SFH and persist it to the dataset
         marginal_sfh_group = patch_group.create_group('sfh_marginal')
         for fit_key in fit_keys:
-            sfh_table = patch_group['sfh'][fit_key]
+            sfh_table = Table(np.array(patch_group['sfh'][fit_key]))
             marginalized_sfh_table = marginalize_sfh_metallicity(sfh_table)
             marginal_sfh_group.create_dataset(
                 fit_key,
-                data=marginalized_sfh_table)
+                data=np.array(marginalized_sfh_table))
 
         # Compute the 25th and 75th percentils of cumulative SF.
         _25 = []
