@@ -58,7 +58,7 @@ def main():
         plot_major_ax_sfr(dataset, args.major_ax_sfr)
         plot_major_ax_sfr_linear(dataset, args.major_ax_sfr + '_linear')
 
-    if args.cumulative_mass_plot is not None:
+    if args.major_ax_cmass is not None:
         plot_major_ax_cumulative_mass(dataset, args.cumulative_mass_plot)
 
 
