@@ -379,9 +379,8 @@ def plot_major_ax_cumulative_mass_unnorm(dataset, plot_path):
                            width_ratios=None, height_ratios=None)
     ax = fig.add_subplot(gs[0])
     ax.set_xlabel(r'$\log(A~\mathrm{yr}^{-1})$')
-    ax.set_ylabel(r'$M(t<A) [M_\odot]$')
+    ax.set_ylabel(r'$M(t_\mathrm{lookback}<A) [M_\odot]$')
     for patch in data:
-        print patch
         ax.plot(patch['logage'], patch['cmass'], ls='-', lw=1., c='k')
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
@@ -393,20 +392,36 @@ def plot_major_ax_cumulative_mass_norm(dataset, plot_path):
 
     fig = Figure(figsize=(6, 4), frameon=False)
     canvas = FigureCanvas(fig)
-    gs = gridspec.GridSpec(1, 1,
-                           left=0.15, right=0.95, bottom=0.15, top=0.95,
-                           wspace=None, hspace=None,
-                           width_ratios=None, height_ratios=None)
-    ax = fig.add_subplot(gs[0])
-    ax.set_xlabel(r'$\log(A~\mathrm{yr}^{-1})$')
-    ax.set_ylabel(r'$M(t<A) / \sum M$')
-    for patch in data:
-        print patch
-        ax.plot(patch['logage'],
-                patch['cmass'] / patch['cmass'].max(),
-                ls='-', lw=1., c='k')
+    gs = gridspec.GridSpec(1, 2,
+                           left=0.1, right=0.95, bottom=0.15, top=0.95,
+                           wspace=0.05, hspace=None,
+                           width_ratios=(0.3, 1), height_ratios=None)
+    ax_log = fig.add_subplot(gs[0])
+    ax_lin = fig.add_subplot(gs[1])
 
-    ax.set_ylim(0., 1.)
+    ax_log.set_xlabel(r'$\log(A~\mathrm{yr}^{-1})$')
+    ax_lin.set_xlabel(r'$A$ (Gyr)')
+    ax_log.set_ylabel(r'$M(t_\mathrm{lookback}>A) / \sum M$')
+    # No tick labels for linear axes vertical axis
+    for tl in ax_lin.get_ymajorticklabels():
+        tl.set_visible(False)
+    ax_log.xaxis.set_major_locator(mpl.ticker.MultipleLocator(base=1))
+
+    for patch in data:
+        normalized_mass = patch['cmass'] / patch['cmass'].max()
+        plot_args = dict(ls='-', lw=1., c='k')
+        ax_log.plot(patch['logage'],
+                    normalized_mass,
+                    **plot_args)
+        ax_lin.plot(10. ** (patch['logage'] - 9.),
+                    normalized_mass,
+                    **plot_args)
+
+    ax_log.set_ylim(0., 1.)
+    ax_lin.set_ylim(0., 1.)
+
+    ax_log.set_xlim(6.5, 9.)
+    ax_lin.set_xlim(1., 13.)
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
