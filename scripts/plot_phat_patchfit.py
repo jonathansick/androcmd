@@ -422,7 +422,7 @@ def _prep_cumulative_mass_dataset(dataset):
         r_kpc = patch.attrs['r_kpc']
         area = patch.attrs['area_proj'] \
             / np.cos(77.5 * np.pi / 180.) / 1e3 / 1e3  # kpc^2
-        cumulative_mass_kpc2 = np.cumsum(sfh['mass'] / area)
+        cumulative_mass_kpc2 = np.cumsum(sfh['mass'][::-1] / area)[::-1]
         logage = sfh['log(age)']
         data.append({'r_kpc': r_kpc,
                      'cmass': cumulative_mass_kpc2,
