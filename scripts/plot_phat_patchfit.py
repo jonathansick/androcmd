@@ -59,7 +59,10 @@ def main():
         plot_major_ax_sfr_linear(dataset, args.major_ax_sfr + '_linear')
 
     if args.major_ax_cmass is not None:
-        plot_major_ax_cumulative_mass(dataset, args.cumulative_mass_plot)
+        plot_major_ax_cumulative_mass_unnorm(
+            dataset, args.major_ax_cmass + '_unnorm')
+        plot_major_ax_cumulative_mass_norm(
+            dataset, args.major_ax_cmass + '_norm')
 
 
 def parse_args():
@@ -365,8 +368,66 @@ def plot_major_ax_sfr_linear(dataset, plot_path):
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
 
-def plot_major_ax_cumulative_mass(dataset, plot_path):
+def plot_major_ax_cumulative_mass_unnorm(dataset, plot_path):
+    data = _prep_cumulative_mass_dataset(dataset)
+
+    fig = Figure(figsize=(6, 4), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 1,
+                           left=0.15, right=0.95, bottom=0.15, top=0.95,
+                           wspace=None, hspace=None,
+                           width_ratios=None, height_ratios=None)
+    ax = fig.add_subplot(gs[0])
+    ax.set_xlabel(r'$\log(A~\mathrm{yr}^{-1})$')
+    ax.set_ylabel(r'$M(t<A) [M_\odot]$')
+    for patch in data:
+        print patch
+        ax.plot(patch['logage'], patch['cmass'], ls='-', lw=1., c='k')
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def plot_major_ax_cumulative_mass_norm(dataset, plot_path):
+    data = _prep_cumulative_mass_dataset(dataset)
+
+    fig = Figure(figsize=(6, 4), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(1, 1,
+                           left=0.15, right=0.95, bottom=0.15, top=0.95,
+                           wspace=None, hspace=None,
+                           width_ratios=None, height_ratios=None)
+    ax = fig.add_subplot(gs[0])
+    ax.set_xlabel(r'$\log(A~\mathrm{yr}^{-1})$')
+    ax.set_ylabel(r'$M(t<A) / \sum M$')
+    for patch in data:
+        print patch
+        ax.plot(patch['logage'],
+                patch['cmass'] / patch['cmass'].max(),
+                ls='-', lw=1., c='k')
+
+    ax.set_ylim(0., 1.)
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def _prep_cumulative_mass_dataset(dataset):
     patch_keys = majoraxplot.select_patches(dataset)
+    patches = dataset['patches']
+    data = []
+    for k in patch_keys:
+        patch = patches[k]
+        sfh = np.array(patch['sfh_marginal']['oir_all'])
+        r_kpc = patch.attrs['r_kpc']
+        area = patch.attrs['area_proj'] \
+            / np.cos(77.5 * np.pi / 180.) / 1e3 / 1e3  # kpc^2
+        cumulative_mass_kpc2 = np.cumsum(sfh['mass'] / area)
+        logage = sfh['log(age)']
+        data.append({'r_kpc': r_kpc,
+                     'cmass': cumulative_mass_kpc2,
+                     'logage': logage})
+    return data
 
 
 if __name__ == '__main__':
