@@ -389,15 +389,26 @@ def plot_major_ax_cumulative_mass_unnorm(dataset, plot_path):
 
 def plot_major_ax_cumulative_mass_norm(dataset, plot_path):
     data = _prep_cumulative_mass_dataset(dataset)
+    # patches = dataset['patches']
+    radii = np.array([p['r_kpc'] for p in data])
+    srt = np.argsort(radii)[::-1]  # sort outside in for better visibility
+    print srt
+    radii = radii[srt]
+    data = [data[i] for i in srt]
 
     fig = Figure(figsize=(6, 4), frameon=False)
     canvas = FigureCanvas(fig)
-    gs = gridspec.GridSpec(1, 2,
-                           left=0.1, right=0.95, bottom=0.15, top=0.95,
-                           wspace=0.05, hspace=None,
-                           width_ratios=(0.3, 1), height_ratios=None)
+    gs = gridspec.GridSpec(1, 3,
+                           left=0.1, right=0.85, bottom=0.15, top=0.95,
+                           wspace=0.02, hspace=None,
+                           width_ratios=(0.3, 1, 0.05), height_ratios=None)
     ax_log = fig.add_subplot(gs[0])
     ax_lin = fig.add_subplot(gs[1])
+    ax_cb = fig.add_subplot(gs[2])
+
+    cmap = perceptual_rainbow_16.mpl_colormap
+    radius_normalizer = mpl.colors.Normalize(vmin=0, vmax=22, clip=True)
+    r_mapper = mpl.cm.ScalarMappable(norm=radius_normalizer, cmap=cmap)
 
     ax_log.set_xlabel(r'$\log(A~\mathrm{yr}^{-1})$')
     ax_lin.set_xlabel(r'$A$ (Gyr)')
@@ -409,13 +420,20 @@ def plot_major_ax_cumulative_mass_norm(dataset, plot_path):
 
     for patch in data:
         normalized_mass = patch['cmass'] / patch['cmass'].max()
-        plot_args = dict(ls='-', lw=1., c='k')
+        r_kpc = patch['r_kpc']
+        plot_args = dict(ls='-',
+                         lw=1.,
+                         c=r_mapper.to_rgba(r_kpc, alpha=1.))
         ax_log.plot(patch['logage'],
                     normalized_mass,
                     **plot_args)
         ax_lin.plot(10. ** (patch['logage'] - 9.),
                     normalized_mass,
                     **plot_args)
+
+    r_mapper.set_array(np.array(radii))
+    cbar = fig.colorbar(r_mapper, cax=ax_cb, orientation='vertical')
+    cbar.set_label(r'$R_\mathrm{maj}~(\mathrm{kpc})$')
 
     ax_log.set_ylim(0., 1.)
     ax_lin.set_ylim(0., 1.)
