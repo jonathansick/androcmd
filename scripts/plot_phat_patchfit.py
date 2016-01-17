@@ -64,6 +64,12 @@ def main():
         plot_major_ax_cumulative_mass_norm(
             dataset, args.major_ax_cmass + '_norm')
 
+    if args.cmass_age_map is not None:
+        plot_mass_accumulation_age_map(
+            dataset,
+            args.cmass_age_map,
+            fit_key='oir_all')
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -80,6 +86,9 @@ def parse_args():
     parser.add_argument(
         '--major-ax-cmass', default=None,
         help='Major axis cumulative mass build-up')
+    parser.add_argument(
+        '--cmass-age-map', default=None,
+        help='Map of ages when cumulative mass thresholds are reached')
     return parser.parse_args()
 
 
@@ -461,6 +470,87 @@ def _prep_cumulative_mass_dataset(dataset):
                      'cmass': cumulative_mass_kpc2,
                      'logage': logage})
     return data
+
+
+def plot_mass_accumulation_age_map(dataset, plot_path, fit_key='oir_all'):
+    """Similar to plot_epoch_sfr_map_vertical, but plots age when each
+    patch reaches a threshold fraction of mass accumulation.
+    """
+    fractions = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
+    nx = 4
+    ny = 2
+    assert len(fractions) == nx * ny
+
+    basemap = load_galex_map()
+
+    fig = Figure(figsize=(6.5, 4), frameon=False)
+    canvas = FigureCanvas(fig)
+    gs = gridspec.GridSpec(ny, nx + 1,
+                           left=0.12, right=0.9, bottom=0.05, top=0.98,
+                           wspace=0.05, hspace=0.05,
+                           width_ratios=[1] * nx + [0.1],
+                           height_ratios=None)
+    ax_cb = fig.add_subplot(gs[:, nx])
+    axes = []
+    for i, mass_frac in enumerate(fractions):
+        iy = i / nx
+        ix = i % nx
+        ax = setup_galex_axes(fig, gs[iy, ix], basemap)
+        if ix > 0:
+            ax.coords[1].ticklabels.set_visible(False)
+        if iy < (ny - 1):
+            ax.coords[0].ticklabels.set_visible(False)
+        axes.append(ax)
+
+    for mass_frac, ax in zip(fractions, axes):
+        cmap = perceptual_rainbow_16.mpl_colormap
+        normalizer = mpl.colors.Normalize(vmin=0, vmax=12, clip=True)
+        ra, dec, logage_at_mass_frac = _compute_ages_at_mass_frac(dataset,
+                                                                  mass_frac,
+                                                                  fit_key)
+        age_gyr = 10. ** (logage_at_mass_frac - 9.)
+        mapper = ax.scatter(ra, dec, c=age_gyr,
+                            norm=normalizer,
+                            cmap=cmap,
+                            edgecolors='None', s=16,
+                            transform=ax.get_transform('world'))
+        ax.text(0.95, 0.95, '{0:.1f}'.format(mass_frac),
+                ha='right', va='top', transform=ax.transAxes)
+
+    cbar = fig.colorbar(mapper,
+                        cax=ax_cb, orientation='vertical')
+    cbar.set_label(r'$A$ Gyr')
+
+    gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
+    canvas.print_figure(plot_path + ".pdf", format="pdf")
+
+
+def _compute_ages_at_mass_frac(dataset, frac_threshold, fit_key):
+    ra, dec, thresh_logage = [], [], []
+
+    for k in dataset['patches']:
+        p = dataset['patches'][k]
+        print k
+        print p
+        sfh = np.array(p['sfh_marginal'][fit_key])
+        ra.append(p.attrs['ra0'])
+        dec.append(p.attrs['dec0'])
+        area = p.attrs['area_proj'] \
+            / np.cos(77.5 * np.pi / 180.) / 1e3 / 1e3  # kpc^2
+        cumulative_mass_kpc2 = np.cumsum(sfh['mass'][::-1] / area)[::-1]
+        cmass_norm = cumulative_mass_kpc2 / cumulative_mass_kpc2.max()
+        logage = sfh['log(age)']
+        print frac_threshold, cmass_norm
+        try:
+            arg_below_fraction = np.argwhere(
+                cmass_norm <= frac_threshold)[0][0]
+        except IndexError:
+            # No age when this mass fraction was recorded;
+            # default to oldest age
+            arg_below_fraction = len(logage) - 1
+        thresh_logage.append(logage[arg_below_fraction])
+
+    return np.array(ra), np.array(dec), np.array(thresh_logage)
 
 
 if __name__ == '__main__':
