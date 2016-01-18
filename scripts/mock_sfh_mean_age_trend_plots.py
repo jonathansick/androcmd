@@ -75,15 +75,14 @@ def plot_ssp_mean_age_accuracy(plot_path,
 
 def plot_ideal_mean_age_accuracy(plot_path):
     real_experiments = ['m6', 'm5', 'm4', 'm3']
-    real_labels = ['\#3', '\#4', '\#5', '\#6'],
+    real_labels = [r'AST 6', r'AST 5', r'AST 4', r'AST 3']
     real_colors = YlGnBu_4.mpl_colors[::-1]
+    print real_colors
 
-    ideal_experiment = 'ideal'
-    ideal_planes = ['oir_all', 'oir_all_28', 'oir_all_30', 'oir_all_32']
+    ideal_experiment = 'idealall'
+    ideal_planes = ['oir_all', 'oir_all_28']
     ideal_labels = ['Errorless OIR-ALL',
-                    'Errorless OIR-ALL-28',
-                    'Errorless OIR-ALL-30',
-                    'Errorless OIR-ALL-32']
+                    'Errorless OIR-ALL-28']
     ideal_colors = Set1_4.mpl_colors
 
     fig = Figure(figsize=(6.5, 3.5), frameon=False)
@@ -96,12 +95,13 @@ def plot_ideal_mean_age_accuracy(plot_path):
 
     itr = zip(real_experiments, real_labels, real_colors)
     for experiment, label, color in itr:
+        print experiment
         t = ssp_mean_age_table(experiment=experiment)
         age_diff = t['{0}_mean_age'.format('oir_all')] - t['mock_age']
         # age_sigma = t['{0}_mean_age_sigma'.format('oir_all')]
         ax.plot(t['mock_age'],
                 age_diff,
-                c=color, label=label, lw=4, alpha=0.8)
+                c=color, label=label, lw=4, alpha=0.9)
         # ax.plot(t['mock_age'],
         #         -age_sigma,
         #         c=color, lw=0.5, ls='--')
@@ -110,7 +110,8 @@ def plot_ideal_mean_age_accuracy(plot_path):
         #         c=color, lw=0.5, ls='--')
 
     for plane, label, color in zip(ideal_planes, ideal_labels, ideal_colors):
-        t = ssp_mean_age_table(experiment=ideal_experiment)
+        t = ssp_mean_age_table(experiment=ideal_experiment,
+                               plane_keys=ideal_planes)
         age_diff = t['{0}_mean_age'.format(plane)] - t['mock_age']
         # age_sigma = t['{0}_mean_age_sigma'.format(plane)]
         ax.plot(t['mock_age'],
@@ -118,7 +119,7 @@ def plot_ideal_mean_age_accuracy(plot_path):
                 c=color, label=label, lw=1.5)
 
     ax.set_xlabel(r'$\langle A \rangle_\mathrm{mock}$ (Gyr)')
-    ax.set_ylim(-10, 10)
+    ax.set_ylim(-10., 10.)
 
     ax.set_ylabel(
         r'$\langle A \rangle_\mathrm{fit} - \langle A \rangle_\mathrm{mock}$ (Gyr)')  # NOQA
@@ -209,7 +210,7 @@ def plot_tau_mean_age_accuracy(plot_path):
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
 
-def ssp_mean_age_table(experiment='m3'):
+def ssp_mean_age_table(experiment='m3', plane_keys=('lewis', 'oir_all')):
     """Make a table of SSP age (Myr), recovered age (Myr)."""
     dirname = os.path.join(os.getenv('STARFISH'), experiment)
     h5path = os.path.join(dirname, experiment + '.hdf5')
@@ -226,7 +227,6 @@ def ssp_mean_age_table(experiment='m3'):
                  'ssp_5370myr_solar',
                  'ssp_9549myr_solar']
 
-    plane_keys = ['lewis', 'oir_all']
     fit_mean_ages = {k: np.empty(len(mock_list)) for k in plane_keys}
     fit_mean_age_sigmas = {k: np.empty(len(mock_list)) for k in plane_keys}
     mock_mean_ages = np.empty(len(mock_list))
@@ -238,11 +238,10 @@ def ssp_mean_age_table(experiment='m3'):
                 = dataset[sfh_key]['sfh'][plane_key].attrs['mean_age'][0]
             fit_mean_age_sigmas[plane_key][i] \
                 = dataset[sfh_key]['sfh'][plane_key].attrs['mean_age'][1]
-    cols = [mock_mean_ages,
-            fit_mean_ages['lewis'], fit_mean_age_sigmas['lewis'],
-            fit_mean_ages['oir_all'], fit_mean_age_sigmas['oir_all']]
-    colnames = ['mock_age', 'lewis_mean_age', 'lewis_mean_age_sigma',
-                'oir_all_mean_age', 'oir_all_mean_age_sigma']
+    cols = [mock_mean_ages] + [fit_mean_ages[p] for p in plane_keys] \
+        + [fit_mean_age_sigmas[p] for p in plane_keys]
+    colnames = ['mock_age'] + ['{}_mean_age'.format(p) for p in plane_keys] \
+        + ['{}_mean_age_sigma'.format(p) for p in plane_keys]
     return Table(cols, names=colnames)
 
 
