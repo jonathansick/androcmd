@@ -483,11 +483,11 @@ def plot_mass_accumulation_age_map(dataset, plot_path, fit_key='oir_all'):
 
     basemap = load_galex_map()
 
-    fig = Figure(figsize=(6.5, 4), frameon=False)
+    fig = Figure(figsize=(6.5, 4.5), frameon=False)
     canvas = FigureCanvas(fig)
     gs = gridspec.GridSpec(ny, nx + 1,
-                           left=0.12, right=0.9, bottom=0.05, top=0.98,
-                           wspace=0.05, hspace=0.05,
+                           left=0.12, right=0.9, bottom=0.05, top=0.93,
+                           wspace=0.05, hspace=0.1,
                            width_ratios=[1] * nx + [0.1],
                            height_ratios=None)
     ax_cb = fig.add_subplot(gs[:, nx])
@@ -504,7 +504,7 @@ def plot_mass_accumulation_age_map(dataset, plot_path, fit_key='oir_all'):
 
     for mass_frac, ax in zip(fractions, axes):
         cmap = perceptual_rainbow_16.mpl_colormap
-        normalizer = mpl.colors.Normalize(vmin=0, vmax=12, clip=True)
+        normalizer = mpl.colors.Normalize(vmin=0, vmax=6, clip=True)
         ra, dec, logage_at_mass_frac = _compute_ages_at_mass_frac(dataset,
                                                                   mass_frac,
                                                                   fit_key)
@@ -514,12 +514,15 @@ def plot_mass_accumulation_age_map(dataset, plot_path, fit_key='oir_all'):
                             cmap=cmap,
                             edgecolors='None', s=16,
                             transform=ax.get_transform('world'))
-        ax.text(0.95, 0.95, '{0:.1f}'.format(mass_frac),
-                ha='right', va='top', transform=ax.transAxes)
+        label = r'$\frac{{M(t_\mathrm{{L}}>A)}}{{\sum M}} ' \
+            '\geq {0:.1f}$'.format(mass_frac)
+        ax.text(0.5, 1.02, label,
+                ha='center', va='bottom', size=10, transform=ax.transAxes,
+                backgroundcolor='w')
 
     cbar = fig.colorbar(mapper,
                         cax=ax_cb, orientation='vertical')
-    cbar.set_label(r'$A$ Gyr')
+    cbar.set_label(r'$A$ (Gyr)')
 
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
