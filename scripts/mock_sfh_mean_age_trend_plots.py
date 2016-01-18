@@ -74,9 +74,9 @@ def plot_ssp_mean_age_accuracy(plot_path,
 
 
 def plot_ideal_mean_age_accuracy(plot_path):
-    real_experiments = ['m6', 'm5', 'm4', 'm3']
-    real_labels = [r'AST 6', r'AST 5', r'AST 4', r'AST 3']
-    real_colors = YlGnBu_4.mpl_colors[::-1]
+    real_experiments = ['m6', 'm5', 'm4', 'm3'][::-1]
+    real_labels = [r'\#6', r'\#5', r'\#4', r'\#3'][::-1]
+    real_colors = YlGnBu_4.mpl_colors
     print real_colors
 
     ideal_experiment = 'idealall'
@@ -101,7 +101,8 @@ def plot_ideal_mean_age_accuracy(plot_path):
         # age_sigma = t['{0}_mean_age_sigma'.format('oir_all')]
         ax.plot(t['mock_age'],
                 age_diff,
-                c=color, label=label, lw=4, alpha=0.9)
+                c=color, label=label, lw=4, alpha=0.5, dashes=(5, 7.5),
+                dash_joinstyle='round', dash_capstyle='round')
         # ax.plot(t['mock_age'],
         #         -age_sigma,
         #         c=color, lw=0.5, ls='--')
@@ -116,14 +117,14 @@ def plot_ideal_mean_age_accuracy(plot_path):
         # age_sigma = t['{0}_mean_age_sigma'.format(plane)]
         ax.plot(t['mock_age'],
                 age_diff,
-                c=color, label=label, lw=1.5)
+                c=color, label=label, lw=2.5)
 
     ax.set_xlabel(r'$\langle A \rangle_\mathrm{mock}$ (Gyr)')
     ax.set_ylim(-10., 10.)
 
     ax.set_ylabel(
         r'$\langle A \rangle_\mathrm{fit} - \langle A \rangle_\mathrm{mock}$ (Gyr)')  # NOQA
-    ax.legend(loc='lower left', fontsize=7)
+    ax.legend(loc='lower left', fontsize=7, handlelength=5)
     gs.tight_layout(fig, pad=1.08, h_pad=None, w_pad=None, rect=None)
     canvas.print_figure(plot_path + ".pdf", format="pdf")
 
