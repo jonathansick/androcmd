@@ -11,19 +11,20 @@ import h5py
 import numpy as np
 from astropy.table import Table
 from starfisher.sfh import marginalize_sfh_metallicity
-from palettable.colorbrewer.qualitative import Set1_6
+from palettable.colorbrewer.qualitative import Dark2_6
 
-# import matplotlib as mpl
+import matplotlib as mpl
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.gridspec as gridspec
 
 
 def main():
-    plot('mock_sfh_tau_cumulative_mass')
+    plot('mock_sfh_tau_cumulative_mass', show_logage=False)
+    plot('mock_sfh_tau_cumulative_mass_logage', show_logage=True)
 
 
-def plot(plot_path):
+def plot(plot_path, show_logage=False):
     # Star formation histories
     model_list = ['tau_0.1_solar',
                   'tau_0.5_solar',
@@ -37,32 +38,40 @@ def plot(plot_path):
 
     # Fitting experiements (AST fields, and errorless/ deep)
     root_path = os.getenv('STARFISH')
-    all_colors = Set1_6.mpl_colors
+    all_colors = Dark2_6.mpl_colors
+    realistic_linestyle = {'ls': '-', 'lw': 1}
+    errorless_linestyle = {'ls': '--', 'dashes': (5, 2), 'lw': 1}
     experiments = [
         [os.path.join(root_path, 'm3', 'm3.hdf5'),
          'oir_all',
-         r'\#3',
-         all_colors[0]],
+         r'AST \#3',
+         all_colors[0],
+         realistic_linestyle],
         [os.path.join(root_path, 'm4', 'm4.hdf5'),
          'oir_all',
-         r'\#4',
-         all_colors[1]],
+         r'AST \#4',
+         all_colors[1],
+         realistic_linestyle],
         [os.path.join(root_path, 'm5', 'm5.hdf5'),
          'oir_all',
-         r'\#5',
-         all_colors[2]],
+         r'AST \#5',
+         all_colors[2],
+         realistic_linestyle],
         [os.path.join(root_path, 'm6', 'm6.hdf5'),
          'oir_all',
-         r'\#6',
-         all_colors[3]],
+         r'AST \#6',
+         all_colors[3],
+         realistic_linestyle],
         [os.path.join(root_path, 'idealall', 'idealall.hdf5'),
          'oir_all',
          r'Errorless',
-         all_colors[4]],
+         all_colors[4],
+         errorless_linestyle],
         [os.path.join(root_path, 'idealall', 'idealall.hdf5'),
          'oir_all_28',
          r'Deep Errorless',
-         all_colors[5]],
+         all_colors[5],
+         errorless_linestyle],
     ]
 
     nx = 4
@@ -83,19 +92,25 @@ def plot(plot_path):
                 ha='center', va='bottom', transform=ax.transAxes)
 
         for e in experiments:
-            exp_path, fit_key, exp_label, c = e
+            exp_path, fit_key, exp_label, c, ls = e
             logage, model_cmass, fit_cmass = extract_cumulative_mass_function(
                 exp_path, model_name, fit_key)
 
-            ax.plot(10. ** (logage - 9.),
+            if show_logage:
+                A = logage
+            else:
+                A = 10. ** (logage - 9.)
+            ax.plot(A,
                     fit_cmass,
                     label=exp_label,
-                    ls='-',
                     c=c,
-                    lw=1.)
+                    **ls)
             ax.set_ylim(-0.05, 1.05)
-            ax.set_xlim(0., 12.)
-        ax.plot(10. ** (logage - 9.),
+            if show_logage:
+                ax.set_xlim(6.5, 10.2)
+            else:
+                ax.set_xlim(0., 12.)
+        ax.plot(A,
                 model_cmass,
                 ls='-',
                 c=c,
@@ -104,9 +119,8 @@ def plot(plot_path):
                 zorder=-1,
                 label='Model')
         if iy == 0 and ix == 3:
-            ax.legend(bbox_to_anchor=(1.05, 1), loc=2, fontsize=7)
-            # ax.legend(bbox_to_anchor=(0., 1.1), mode='expand',
-            #           loc=2, ncol=7)
+            ax.legend(bbox_to_anchor=(1.05, 1), loc=2, fontsize=7,
+                      frameon=False)
 
         if ix > 0:
             for tl in ax.get_ymajorticklabels():
@@ -117,7 +131,11 @@ def plot(plot_path):
             for tl in ax.get_xmajorticklabels():
                 tl.set_visible(False)
         else:
-            ax.set_xlabel(r'$A$ (Gyr)')
+            if show_logage:
+                ax.set_xlabel(r'$\log_{10} (A~\mathrm{Gyr}^{-1})$')
+                ax.xaxis.set_major_locator(mpl.ticker.MultipleLocator(base=1))
+            else:
+                ax.set_xlabel(r'$A$ (Gyr)')
             for tick in ax.xaxis.get_major_ticks():
                 tick.label.set_fontsize(8)
 
