@@ -55,11 +55,11 @@ def plot_ssp_mean_age_accuracy(plot_path,
                     age_diff,
                     c=color, label=label, lw=1.5)
             ax.plot(t['mock_age'],
-                    -age_sigma,
-                    c=color, lw=0.5, ls='--')
+                    np.array(-age_sigma),
+                    c=color, lw=0.5, label=None, ls='--')
             ax.plot(t['mock_age'],
-                    age_sigma,
-                    c=color, lw=0.5, ls='--')
+                    np.array(age_sigma),
+                    c=color, lw=0.5, label=None, ls='--')
         ax.set_xlabel(r'$\langle A \rangle_\mathrm{mock}$ (Gyr)')
         ax.set_ylim(-10, 10)
     ax_lewis.set_ylabel(
