@@ -41,6 +41,7 @@ def plot(plot_path, show_logage=False):
     all_colors = Dark2_6.mpl_colors
     realistic_linestyle = {'ls': '-', 'lw': 1}
     errorless_linestyle = {'ls': '--', 'dashes': (5, 2), 'lw': 1}
+    # errorless_linestyle = {'ls': '--', 'lw': 1}
     experiments = [
         [os.path.join(root_path, 'm3', 'm3.hdf5'),
          'oir_all',
@@ -113,8 +114,8 @@ def plot(plot_path, show_logage=False):
         ax.plot(A,
                 model_cmass,
                 ls='-',
-                c=c,
-                alpha=0.3,
+                c='0.7',
+                alpha=1.,
                 lw=4,
                 zorder=-1,
                 label='Model')

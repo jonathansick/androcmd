@@ -10,33 +10,34 @@ import numpy as np
 from astropy.table import Table
 import h5py
 
-# import matplotlib as mpl
+import matplotlib as mpl
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import matplotlib.gridspec as gridspec
 # from palettable.cubehelix import Cubehelix
-from palettable.colorbrewer.qualitative import Set1_4, Set1_5
-from palettable.colorbrewer.sequential import YlGnBu_4
+# from palettable.colorbrewer.qualitative import Set1_4, Set1_5
+from palettable.colorbrewer.qualitative import Dark2_6
+# from palettable.colorbrewer.sequential import YlGnBu_4
 
 
 def main():
-    # plot_ssp_mean_age_accuracy('real_mock_ssp_mean_age_accuracy')
-    # plot_ssp_mean_age_accuracy(
-    #     'mock_ssp_mean_age_accuracy',
-    #     experiments=('m3', 'm4', 'm5', 'm6', 'ideal6'),
-    #     labels=('\#3', '\#4', '\#5', '\#6', 'No Errors'),
-    #     colors=Set1_5.mpl_colors)
+    plot_ssp_mean_age_accuracy('real_mock_ssp_mean_age_accuracy')
+    plot_ssp_mean_age_accuracy(
+        'mock_ssp_mean_age_accuracy',
+        experiments=('m3', 'm4', 'm5', 'm6', 'ideal6'),
+        labels=('\#3', '\#4', '\#5', '\#6', 'No Errors'),
+        colors=Dark2_6.mpl_colors)
     plot_ideal_mean_age_accuracy('mock_ssp_ideal_mean_age_accuracy')
-    # plot_ssp_mean_age_percent_accuracy(
-    #     'real_mock_ssp_mean_age_percent_accuracy')
-    # plot_tau_mean_age_accuracy(
-    #     'real_mock_tau_mean_age_accuracy')
+    plot_ssp_mean_age_percent_accuracy(
+        'real_mock_ssp_mean_age_percent_accuracy')
+    plot_tau_mean_age_accuracy(
+        'real_mock_tau_mean_age_accuracy')
 
 
 def plot_ssp_mean_age_accuracy(plot_path,
                                experiments=('m3', 'm4', 'm5', 'm6'),
                                labels=('\#3', '\#4', '\#5', '\#6'),
-                               colors=Set1_4.mpl_colors):
+                               colors=Dark2_6.mpl_colors):
     fig = Figure(figsize=(6.5, 3.5), frameon=False)
     canvas = FigureCanvas(fig)
     gs = gridspec.GridSpec(1, 2,
@@ -46,7 +47,7 @@ def plot_ssp_mean_age_accuracy(plot_path,
     ax_lewis = fig.add_subplot(gs[0])
     ax_oirall = fig.add_subplot(gs[1])
     for plane, ax in zip(['lewis', 'oir_all'], [ax_lewis, ax_oirall]):
-        for experiment, label, color in zip(experiments, labels, colors):
+        for experiment, label, color in zip(experiments, labels, colors[:4]):
             t = ssp_mean_age_table(experiment=experiment)
             age_diff = t['{0}_mean_age'.format(plane)] - t['mock_age']
             age_sigma = t['{0}_mean_age_sigma'.format(plane)]
@@ -65,6 +66,7 @@ def plot_ssp_mean_age_accuracy(plot_path,
         r'$\langle A \rangle_\mathrm{fit} - \langle A \rangle_\mathrm{mock}$ (Gyr)')  # NOQA
     for tl in ax_oirall.get_ymajorticklabels():
         tl.set_visible(False)
+    ax.yaxis.set_minor_locator(mpl.ticker.MultipleLocator(base=1))
     ax_lewis.text(0.1, 0.9, 'ACS-MS', transform=ax_lewis.transAxes)
     ax_oirall.text(0.1, 0.9, 'OIR-ALL', transform=ax_oirall.transAxes)
     ax_lewis.set_xlim(0., 2.)
@@ -74,16 +76,19 @@ def plot_ssp_mean_age_accuracy(plot_path,
 
 
 def plot_ideal_mean_age_accuracy(plot_path):
-    real_experiments = ['m6', 'm5', 'm4', 'm3'][::-1]
-    real_labels = [r'\#6', r'\#5', r'\#4', r'\#3'][::-1]
-    real_colors = YlGnBu_4.mpl_colors
-    print real_colors
+    colors = Dark2_6.mpl_colors
+    print colors
+
+    real_experiments = ['m3', 'm4', 'm5', 'm6']
+    real_labels = [r'\#3', r'\#4', r'\#5', r'\#6']
+    real_colors = colors[:4]
 
     ideal_experiment = 'idealall'
     ideal_planes = ['oir_all', 'oir_all_28']
     ideal_labels = ['Errorless OIR-ALL',
                     'Errorless OIR-ALL-28']
-    ideal_colors = Set1_4.mpl_colors
+    ideal_colors = colors[4:]
+    print ideal_colors
 
     fig = Figure(figsize=(6.5, 3.5), frameon=False)
     canvas = FigureCanvas(fig)
@@ -95,14 +100,15 @@ def plot_ideal_mean_age_accuracy(plot_path):
 
     itr = zip(real_experiments, real_labels, real_colors)
     for experiment, label, color in itr:
-        print experiment
         t = ssp_mean_age_table(experiment=experiment)
         age_diff = t['{0}_mean_age'.format('oir_all')] - t['mock_age']
         # age_sigma = t['{0}_mean_age_sigma'.format('oir_all')]
+        print experiment, color
         ax.plot(t['mock_age'],
                 age_diff,
-                c=color, label=label, lw=4, alpha=0.5, dashes=(5, 7.5),
-                dash_joinstyle='round', dash_capstyle='round')
+                c=color, label=label, lw=3)
+                # dashes=(5, 7.5),
+                # dash_joinstyle='round', dash_capstyle='round')
         # ax.plot(t['mock_age'],
         #         -age_sigma,
         #         c=color, lw=0.5, ls='--')
@@ -115,12 +121,17 @@ def plot_ideal_mean_age_accuracy(plot_path):
                                plane_keys=ideal_planes)
         age_diff = t['{0}_mean_age'.format(plane)] - t['mock_age']
         # age_sigma = t['{0}_mean_age_sigma'.format(plane)]
+        print label, color
         ax.plot(t['mock_age'],
                 age_diff,
-                c=color, label=label, lw=2.5)
+                c=color, label=label, lw=3,
+                dashes=(5, 7.5),
+                dash_joinstyle='round', dash_capstyle='round')
 
     ax.set_xlabel(r'$\langle A \rangle_\mathrm{mock}$ (Gyr)')
     ax.set_ylim(-10., 10.)
+
+    ax.yaxis.set_minor_locator(mpl.ticker.MultipleLocator(base=1))
 
     ax.set_ylabel(
         r'$\langle A \rangle_\mathrm{fit} - \langle A \rangle_\mathrm{mock}$ (Gyr)')  # NOQA
@@ -132,7 +143,7 @@ def plot_ideal_mean_age_accuracy(plot_path):
 def plot_ssp_mean_age_percent_accuracy(plot_path):
     experiments = ['m3', 'm4', 'm5', 'm6']
     labels = ['\#3', '\#4', '\#5', '\#6']
-    colors = Set1_4.mpl_colors
+    colors = Dark2_6.mpl_colors
 
     fig = Figure(figsize=(6.5, 3.5), frameon=False)
     canvas = FigureCanvas(fig)
@@ -174,7 +185,7 @@ def plot_ssp_mean_age_percent_accuracy(plot_path):
 def plot_tau_mean_age_accuracy(plot_path):
     experiments = ['m3', 'm4', 'm5', 'm6']
     labels = ['\#3', '\#4', '\#5', '\#6']
-    colors = Set1_4.mpl_colors
+    colors = Dark2_6.mpl_colors
 
     fig = Figure(figsize=(6.5, 3.5), frameon=False)
     canvas = FigureCanvas(fig)
